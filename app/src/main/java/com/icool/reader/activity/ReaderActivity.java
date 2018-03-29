@@ -23,6 +23,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -1229,7 +1230,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                                 //后半部分
                                 List<LetterData> list = letterDataList.subList(letterDataList.size() - mTtsLetterOffset, letterDataList.size());
                                 readerView.setTtsLetters(list);
-                                readerView.directNextPage();
+                                readerView.ttsNextPage();
                             } else {
                                 //前半部分
                                 List<LetterData> list = letterDataList.subList(0, letterDataList.size() - mTtsLetterOffset);
@@ -1253,7 +1254,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                     public void run() {
                         readerView.clearTtsLetters();
                         if (mTtsLetterOffset == 0) {
-                            PageData pageData = readerView.directNextPage();
+                            PageData pageData = readerView.ttsNextPage();
                             speak(pageData);
                         } else {
                             hasSwitchNextPage = false;//重置标志位
@@ -1536,4 +1537,18 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     }
 
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (!readerView.isSpeaking()) {
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_VOLUME_DOWN:
+                    readerView.directNextPage();
+                    return true;
+                case KeyEvent.KEYCODE_VOLUME_UP:
+                    readerView.directPrePage();
+                    return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 }

@@ -99,7 +99,7 @@ public abstract class PageAnimController {
 
     abstract void drawMove(Canvas canvas);
 
-    protected void startScroll() {
+    private void startScroll() {
         isScroll = true;
         int dx = 0;
         switch (mDirection) {
@@ -126,7 +126,7 @@ public abstract class PageAnimController {
         }
         duration = duration * Math.abs(dx) / mReaderWidth;
         mScroller.startScroll(mTouchX, 0, dx, 0, duration);
-        mReaderView.postInvalidate();
+        mReaderView.invalidate();
     }
 
 
@@ -274,6 +274,9 @@ public abstract class PageAnimController {
         return true;
     }
 
+    /**
+     * 回调刷新
+     */
     public void computeScroll() {
         boolean notFinished = mScroller.computeScrollOffset();
         //ReaderLogger.e(TAG, "computeScroll  computeScrollOffset -> " + notFinished);
@@ -330,6 +333,38 @@ public abstract class PageAnimController {
      */
     public Bitmap getCurrentBitmap() {
         return mCurrentBitmap;
+    }
+
+    /**
+     * 直接进入下一页
+     * {@link #startScroll} 方法来控制动画
+     */
+    public boolean directNextPage() {
+        if (isScroll)abortAnim();
+        mTouchX = mTouchY = 0;
+        mStartX = mStartY = 0;
+        boolean hasNext = hasNext();
+        if (hasNext) {
+            mDirection = IReaderDirection.NEXT;
+            startScroll();
+        }
+        return hasNext;
+    }
+
+    /**
+     * 直接进入上一页
+     * {@link #startScroll} 方法来控制动画
+     */
+    public boolean directPrePage() {
+        if (isScroll)abortAnim();
+        mTouchX = mTouchY = 0;
+        mStartX = mStartY = 0;
+        boolean hasPre = hasPre();
+        if (hasPre) {
+            mDirection = IReaderDirection.PRE;
+            startScroll();
+        }
+        return hasPre;
     }
 
 

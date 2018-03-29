@@ -145,9 +145,9 @@ public class ReaderView extends View {
 
     /**
      * 设置翻页模式
-     * {@link #(IReaderConfig.PageMode.SLIDE)}  平移模式
-     * {@link #(IReaderConfig.PageMode.NONE)}  无动画
-     * {@link #(IReaderConfig.PageMode.SIMULATION)} 仿真
+     * {@link IReaderConfig.PageMode#SLIDE)}  平移模式
+     * {@link IReaderConfig.PageMode#NONE)}  无动画
+     * {@link IReaderConfig.PageMode#SIMULATION)} 仿真
      *
      * @param mode 翻页模式
      */
@@ -659,10 +659,27 @@ public class ReaderView extends View {
     }
 
     /**
+     * 直接翻到上一一页
+     */
+    public PageData directPrePage() {
+        boolean hasPre = mAnimController.directPrePage();
+        if (hasPre) return mRespository.getCurPage();
+        return null;
+    }
+
+    /**
      * 直接翻到下一页
-     * TODO  没有实现动画翻页、直接绘制了下一页
      */
     public PageData directNextPage() {
+        boolean hasNext = mAnimController.directNextPage();
+        if (hasNext) return mRespository.getCurPage();
+        return null;
+    }
+
+    /**
+     * 语音朗读翻到下一页
+     */
+    public PageData ttsNextPage() {
         PageData nextPage = mRespository.directNextPage();
         if (nextPage != null) {
             drawCurrentPage();

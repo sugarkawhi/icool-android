@@ -406,6 +406,29 @@ public class PageRespository {
     }
 
     /**
+     * 直接进入上一页
+     *
+     * @return 返回上一页的数据
+     */
+    public PageData directPrePage() {
+        if (null == mCurPageList || mCurPageList.isEmpty() || null == mCurPage) return null;
+        int index = mCurPage.getIndexOfChapter();
+        if (index == 0) {
+            if (null == mPreChapter || null == mPrePageList || mPrePageList.isEmpty())
+                return null;
+            switchPreChapter();
+            mCurPage = mCurPageList.get(mCurPageList.size() - 1);
+            mProgress = 1;
+        } else {
+            int preIndex = index - 1;
+            mCurPage = mCurPageList.get(preIndex);
+            mProgress = (preIndex + 1f) / mCurPageList.size();
+        }
+        callBackProgress();
+        return mCurPage;
+    }
+
+    /**
      * 直接进入下一页
      *
      * @return 返回下一页的数据
