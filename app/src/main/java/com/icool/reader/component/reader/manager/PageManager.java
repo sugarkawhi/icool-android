@@ -443,12 +443,4 @@ public class PageManager {
 //        mBookName = bookName;
     }
 
-    /**
-     * 设置字体
-     * {@link IReaderConfig.Typeface}
-     */
-    public void setTypeFace(android.graphics.Typeface typeface) {
-        mContentPaint.setTypeface(typeface);
-        mChapterNamePaint.setTypeface(typeface);
-    }
 }

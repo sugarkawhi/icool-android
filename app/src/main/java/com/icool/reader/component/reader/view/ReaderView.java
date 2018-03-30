@@ -828,7 +828,9 @@ public class ReaderView extends View {
             default:
                 typeface = android.graphics.Typeface.DEFAULT;
         }
-        mPageManager.setTypeFace(typeface);
+        mContentPaint.setTypeface(typeface);
+        mChapterNamePaint.setTypeface(typeface);
+        //mHeaderPaint.setTypeface(typeface);
         rePlanning();
     }
 }
