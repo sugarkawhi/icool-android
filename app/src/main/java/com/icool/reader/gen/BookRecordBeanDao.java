@@ -43,7 +43,7 @@ public class BookRecordBeanDao extends AbstractDao<BookRecordBean, String> {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"BOOK_RECORD_BEAN\" (" + //
                 "\"BOOK_ID\" TEXT PRIMARY KEY NOT NULL ," + // 0: bookId
-                "\"CHAPTER_ID\" TEXT," + // 1: chapterId
+                "\"CHAPTER_ID\" TEXT NOT NULL ," + // 1: chapterId
                 "\"PROGRESS\" REAL NOT NULL );"); // 2: progress
     }
 
@@ -61,11 +61,7 @@ public class BookRecordBeanDao extends AbstractDao<BookRecordBean, String> {
         if (bookId != null) {
             stmt.bindString(1, bookId);
         }
- 
-        String chapterId = entity.getChapterId();
-        if (chapterId != null) {
-            stmt.bindString(2, chapterId);
-        }
+        stmt.bindString(2, entity.getChapterId());
         stmt.bindDouble(3, entity.getProgress());
     }
 
@@ -77,11 +73,7 @@ public class BookRecordBeanDao extends AbstractDao<BookRecordBean, String> {
         if (bookId != null) {
             stmt.bindString(1, bookId);
         }
- 
-        String chapterId = entity.getChapterId();
-        if (chapterId != null) {
-            stmt.bindString(2, chapterId);
-        }
+        stmt.bindString(2, entity.getChapterId());
         stmt.bindDouble(3, entity.getProgress());
     }
 
@@ -94,7 +86,7 @@ public class BookRecordBeanDao extends AbstractDao<BookRecordBean, String> {
     public BookRecordBean readEntity(Cursor cursor, int offset) {
         BookRecordBean entity = new BookRecordBean( //
             cursor.isNull(offset + 0) ? null : cursor.getString(offset + 0), // bookId
-            cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // chapterId
+            cursor.getString(offset + 1), // chapterId
             cursor.getFloat(offset + 2) // progress
         );
         return entity;
@@ -103,7 +95,7 @@ public class BookRecordBeanDao extends AbstractDao<BookRecordBean, String> {
     @Override
     public void readEntity(Cursor cursor, BookRecordBean entity, int offset) {
         entity.setBookId(cursor.isNull(offset + 0) ? null : cursor.getString(offset + 0));
-        entity.setChapterId(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
+        entity.setChapterId(cursor.getString(offset + 1));
         entity.setProgress(cursor.getFloat(offset + 2));
      }
     

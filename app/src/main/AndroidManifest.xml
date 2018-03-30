@@ -50,7 +50,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activity.ReaderActivity" />
+        <activity
+            android:name=".activity.ReaderActivity"
+            android:theme="@style/AppTheme.NoBar" />
     </application>
 
 </manifest>

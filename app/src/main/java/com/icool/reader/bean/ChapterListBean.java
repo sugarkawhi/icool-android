@@ -1,6 +1,8 @@
 package com.icool.reader.bean;
 
 
+import com.icool.reader.component.reader.bean.ChapterBean;
+
 import java.io.Serializable;
 import java.util.List;
 

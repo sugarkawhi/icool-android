@@ -20,7 +20,7 @@ import com.icool.reader.component.reader.anim.CoverAnimController;
 import com.icool.reader.component.reader.anim.NoneAnimController;
 import com.icool.reader.component.reader.anim.PageAnimController;
 import com.icool.reader.component.reader.anim.SlideAnimController;
-import com.icool.reader.component.reader.bean.BaseChapterBean;
+import com.icool.reader.component.reader.bean.ChapterBean;
 import com.icool.reader.component.reader.config.IReaderConfig;
 import com.icool.reader.component.reader.data.LetterData;
 import com.icool.reader.component.reader.data.PageData;
@@ -55,22 +55,18 @@ public class ReaderView extends View {
     private static final String TAG = "MReaderView";
     //语音合成播放
     private boolean isSpeaking = false;
-
     //加载中
     private static final int STATE_LOADING = 1;
     //打开书籍成功
     private static final int STATE_OPEN = 2;
     //当前状态
     private int mCurrentState = STATE_LOADING;
-
-    //生成页面
+    //页面生成器
     public PageElement mPageElement;
-
     //背景图
     private Bitmap mReaderBackgroundBitmap;
     //翻页模式
     private int mPageMode;
-
     //View 宽 强制全屏
     private int mWidth;
     //View 高 强制全屏
@@ -144,13 +140,12 @@ public class ReaderView extends View {
      * 初始化
      */
     private void init() {
-
         int pageMode = IReaderPersistence.getPageMode();
         setPageMode(pageMode);
-        int typeface = IReaderPersistence.getTypeface();
-        setTypeface(typeface);
         int background = IReaderPersistence.getBackground();
         setReaderBackground(background);
+        int typeface = IReaderPersistence.getTypeface();
+        setTypeface(typeface);
         int letterSpacing = IReaderPersistence.getLetterSpacing();
         setLetterSpacing(letterSpacing);
         int lineSpacing = IReaderPersistence.getLineSpacing();
@@ -184,9 +179,13 @@ public class ReaderView extends View {
                 mPageMode = IReaderConfig.PageMode.NONE;
                 break;
         }
+        drawCurrentPage();//因为切换了AnimController对象 需要对其重新绘制
         mAnimController.setIReaderTouchListener(mReaderTouchListener);
     }
 
+    /**
+     * 获取当前的翻页模式
+     */
     public int getPageMode() {
         return mPageMode;
     }
@@ -220,11 +219,7 @@ public class ReaderView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         if (mCurrentState == STATE_LOADING) {
-            if (mReaderBackgroundBitmap != null && mReaderBackgroundBitmap.getWidth() > 0 && mReaderBackgroundBitmap.getHeight() > 0) {
-                canvas.drawBitmap(mReaderBackgroundBitmap, 0, 0, null);
-            } else {
-                canvas.drawColor(Color.parseColor("#F5DEB3"));
-            }
+            canvas.drawBitmap(mReaderBackgroundBitmap, 0, 0, null);
         } else {
             mAnimController.dispatchDrawPage(canvas);
         }
@@ -275,11 +270,10 @@ public class ReaderView extends View {
      * @param curChapter 当前章节
      * @param progress   进度
      */
-    public void setCurrentChapter(BaseChapterBean curChapter, float progress) {
+    public void setCurrentChapter(ChapterBean curChapter, float progress) {
         mRespository.reset();
         mRespository.setCurChapter(curChapter);
         mRespository.setProgress(progress);
-        mCurrentState = STATE_OPEN;
         rePlanCurChapter();
     }
 
@@ -290,8 +284,8 @@ public class ReaderView extends View {
      *
      * @param nextChapter 当前章节的下一章
      */
-    public boolean setNextChapter(BaseChapterBean nextChapter) {
-        BaseChapterBean curChapter = mRespository.getCurChapter();
+    public boolean setNextChapter(ChapterBean nextChapter) {
+        ChapterBean curChapter = mRespository.getCurChapter();
         if (null == curChapter) return false;
         if (null == nextChapter) return false;
         if (nextChapter.getDorder() == curChapter.getDorder() + 1) {
@@ -308,8 +302,8 @@ public class ReaderView extends View {
      * 设置上一章节
      * 判断依据：上一章的索引是当前章节的索引-1 否则不予设置
      */
-    public boolean setPreChapter(final BaseChapterBean preChapter) {
-        BaseChapterBean curChapter = mRespository.getCurChapter();
+    public boolean setPreChapter(ChapterBean preChapter) {
+        ChapterBean curChapter = mRespository.getCurChapter();
         if (null == curChapter) return false;
         if (null == preChapter) return false;
         if (preChapter.getDorder() == curChapter.getDorder() - 1) {
@@ -321,6 +315,9 @@ public class ReaderView extends View {
         }
     }
 
+    /**
+     * 获取阅读器背景图
+     */
     public Bitmap getReaderBackgroundBitmap() {
         return mReaderBackgroundBitmap;
     }
@@ -430,6 +427,14 @@ public class ReaderView extends View {
         createCover();
     }
 
+    /**
+     * 刷新封面图
+     * 实际重新绘制了View为新的Bitmap
+     */
+    public void refreshCoverView() {
+        createCover();
+    }
+
 
     /**
      * 设置文字间距
@@ -446,6 +451,7 @@ public class ReaderView extends View {
     }
 
     /**
+     * setCoverView
      * 设置行间距
      *
      * @param lineSpacing 行间距
@@ -495,6 +501,7 @@ public class ReaderView extends View {
 
     /**
      * 需要规划 当前章节
+     * 0、初次设置当前章节
      * 1、设置了文字大小
      * 2、设置了行间距
      * 3、设置了段间距
@@ -519,9 +526,11 @@ public class ReaderView extends View {
 
                     @Override
                     public void onNext(List<PageData> pageList) {
+                        if (pageList.isEmpty()) return;
                         float curProgress = mRespository.getProgress();
                         mRespository.setCurPageList(pageList);
                         mRespository.directPageByProgress(curProgress);
+                        mCurrentState = STATE_OPEN;
                         drawCurrentPage();
                     }
 
@@ -663,7 +672,7 @@ public class ReaderView extends View {
      * 获取当前的chapter
      * 为了保存当前进度
      */
-    public BaseChapterBean getCurrentChapter() {
+    public ChapterBean getCurrentChapter() {
         return mRespository.getCurChapter();
     }
 
@@ -832,5 +841,16 @@ public class ReaderView extends View {
         mChapterNamePaint.setTypeface(typeface);
         //mHeaderPaint.setTypeface(typeface);
         rePlanning();
+    }
+
+    /**
+     * 清空所有的数据
+     * 1.clear Respository data
+     * 2.state change loading
+     */
+    public void clearData() {
+        mRespository.reset();
+        mCurrentState = STATE_LOADING;
+        invalidate();
     }
 }

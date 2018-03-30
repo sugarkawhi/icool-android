@@ -3,6 +3,9 @@ package com.icool.reader.component.reader.dao;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.NotNull;
+
+import java.lang.annotation.Documented;
 
 /**
  * 保存书籍浏览记录
@@ -14,11 +17,14 @@ public class BookRecordBean {
     @Id
     private String bookId;
     //当前章节的id
+    @NotNull
     private String chapterId;
     //当前章节进度
+    @NotNull
     private float progress;
-    @Generated(hash = 1119842043)
-    public BookRecordBean(String bookId, String chapterId, float progress) {
+    @Generated(hash = 209365947)
+    public BookRecordBean(String bookId, @NotNull String chapterId,
+            float progress) {
         this.bookId = bookId;
         this.chapterId = chapterId;
         this.progress = progress;
@@ -44,7 +50,5 @@ public class BookRecordBean {
     public void setProgress(float progress) {
         this.progress = progress;
     }
-
-
 
 }

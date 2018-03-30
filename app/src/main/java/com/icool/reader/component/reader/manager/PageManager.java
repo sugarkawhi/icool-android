@@ -7,8 +7,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 
 
-import com.icool.reader.component.reader.bean.BaseChapterBean;
-import com.icool.reader.component.reader.config.IReaderConfig;
+import com.icool.reader.component.reader.bean.ChapterBean;
 import com.icool.reader.component.reader.dao.BookMarkBean;
 import com.icool.reader.component.reader.data.LetterData;
 import com.icool.reader.component.reader.data.LineData;
@@ -111,7 +110,7 @@ public class PageManager {
      * @return 章节分页列表
      */
     @SuppressLint("DefaultLocale")
-    public List<PageData> generatePages(BaseChapterBean chapter) {
+    public List<PageData> generatePages(ChapterBean chapter) {
         //生成的页面
         List<PageData> pages = new ArrayList<>();
 

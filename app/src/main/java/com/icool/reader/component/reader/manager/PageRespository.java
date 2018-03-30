@@ -2,14 +2,12 @@ package com.icool.reader.component.reader.manager;
 
 import android.graphics.Bitmap;
 
-import com.icool.reader.component.reader.bean.BaseChapterBean;
+import com.icool.reader.component.reader.bean.ChapterBean;
 import com.icool.reader.component.reader.config.IReaderDirection;
 import com.icool.reader.component.reader.data.PageData;
 import com.icool.reader.component.reader.element.PageElement;
 import com.icool.reader.component.reader.listener.IReaderChapterChangeListener;
 import com.icool.reader.component.reader.utils.ReaderLogger;
-
-import org.greenrobot.greendao.Property;
 
 import java.util.List;
 
@@ -24,7 +22,7 @@ public class PageRespository {
     private static final String TAG = "PageRespository";
     private IReaderChapterChangeListener mChapterChangeListener;
     private PageElement mPageElement;
-    private BaseChapterBean mCurChapter, mPreChapter, mNextChapter;
+    private ChapterBean mCurChapter, mPreChapter, mNextChapter;
     private List<PageData> mCurPageList, mPrePageList, mNextPageList;
 
     //当前正在显示的page
@@ -43,27 +41,27 @@ public class PageRespository {
         mChapterChangeListener = chapterChangeListener;
     }
 
-    public void setCurChapter(BaseChapterBean curChapter) {
+    public void setCurChapter(ChapterBean curChapter) {
         mCurChapter = curChapter;
     }
 
-    public void setPreChapter(BaseChapterBean preChapter) {
+    public void setPreChapter(ChapterBean preChapter) {
         mPreChapter = preChapter;
     }
 
-    public void setNextChapter(BaseChapterBean nextChapter) {
+    public void setNextChapter(ChapterBean nextChapter) {
         mNextChapter = nextChapter;
     }
 
-    public BaseChapterBean getCurChapter() {
+    public ChapterBean getCurChapter() {
         return mCurChapter;
     }
 
-    public BaseChapterBean getPreChapter() {
+    public ChapterBean getPreChapter() {
         return mPreChapter;
     }
 
-    public BaseChapterBean getNextChapter() {
+    public ChapterBean getNextChapter() {
         return mNextChapter;
     }
 
@@ -478,4 +476,6 @@ public class PageRespository {
         if (null != mCurPageList && !mCurPageList.isEmpty()) mCurPageList.clear();
         if (null != mNextPageList && !mNextPageList.isEmpty()) mNextPageList.clear();
     }
+
+
 }

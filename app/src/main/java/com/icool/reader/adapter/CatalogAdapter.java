@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 
 import com.icool.reader.R;
-import com.icool.reader.bean.ChapterBean;
+import com.icool.reader.component.reader.bean.ChapterBean;
 import com.icool.reader.http.api.ApiConfig;
 
 import java.util.List;

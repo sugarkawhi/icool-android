@@ -13,8 +13,8 @@
         android:layout_width="120dp"
         android:layout_height="172dp"
         android:layout_centerHorizontal="true"
+        android:background="#ddd"
         android:elevation="3dp"
-        tools:background="#ddd"
         tools:targetApi="lollipop" />
 
     <TextView

@@ -1,7 +1,7 @@
 package com.icool.reader.component.reader.listener;
 
 
-import com.icool.reader.component.reader.bean.BaseChapterBean;
+import com.icool.reader.component.reader.bean.ChapterBean;
 
 /**
  * 章节切换
@@ -19,19 +19,19 @@ public interface IReaderChapterChangeListener {
      * @param curChapter 当前的章节
      * @param direction  方向{#IReaderConfig.Pre,IReaderConfig.Next}
      */
-    void onChapterChange(BaseChapterBean curChapter, int direction);
+    void onChapterChange(ChapterBean curChapter, int direction);
 
     /**
      * 无上一页
      * 回调的情况是：比如因为网络问题没有加载出来 导致当前无上一章 但是当前不是第一章
      */
-    void onNoPrePage(BaseChapterBean curChapter);
+    void onNoPrePage(ChapterBean curChapter);
 
     /**
      * 无下一页
      * 回调的情况是：比如因为网络问题没有加载出来 导致当前无下一章 但是当前不是最后一章
      */
-    void onNoNextPage(BaseChapterBean curChapter);
+    void onNoNextPage(ChapterBean curChapter);
 
     /**
      * 到达第一章的第一页

@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -39,11 +40,10 @@ import com.icool.reader.adapter.BookMarkAdapter;
 import com.icool.reader.adapter.CatalogAdapter;
 import com.icool.reader.base.BaseActivity;
 import com.icool.reader.bean.BookBean;
-import com.icool.reader.bean.ChapterBean;
 import com.icool.reader.bean.ChapterListBean;
 import com.icool.reader.bean.TtsBean;
 import com.icool.reader.component.ptm.PtmLayout;
-import com.icool.reader.component.reader.bean.BaseChapterBean;
+import com.icool.reader.component.reader.bean.ChapterBean;
 import com.icool.reader.component.reader.config.IReaderConfig;
 import com.icool.reader.component.reader.config.IReaderDirection;
 import com.icool.reader.component.reader.dao.BookMarkBean;
@@ -57,6 +57,7 @@ import com.icool.reader.component.reader.listener.IReaderChapterChangeListener;
 import com.icool.reader.component.reader.listener.IReaderTouchListener;
 import com.icool.reader.component.reader.persistence.IReaderPersistence;
 import com.icool.reader.component.reader.tts.OfflineResource;
+import com.icool.reader.component.reader.utils.BitmapUtils;
 import com.icool.reader.component.reader.utils.ScreenUtils;
 import com.icool.reader.component.reader.view.ReaderView;
 
@@ -137,6 +138,8 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     private boolean isShow;
     //书籍详细信息
     private BookBean mBook;
+    private BookMarkFragment mBookMarkFragment;
+    private CatalogueFragment mCatalogFragment;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -144,7 +147,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         setContentView(R.layout.activity_reader);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         ButterKnife.bind(this);
-        mStoryId = getIntent().getStringExtra("storyid");
+        mStoryId = getIntent().getStringExtra(PARAM_STORY_ID);
         init();
     }
 
@@ -157,7 +160,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         initPtmLayout();
         initReaderBar();
         initReaderView();
-        getData();
+        getBookDetail();
     }
 
     /**
@@ -266,7 +269,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      */
     private void initReaderView() {
         //设置背景颜色(ps:也设置对应字体颜色)
-
         readerView.timeChange(TimeFormatUtils.hhmm(System.currentTimeMillis()));
         readerView.setReaderTouchListener(new IReaderTouchListener() {
             @Override
@@ -290,10 +292,9 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
             }
 
         });
-
         readerView.setReaderChapterChangeListener(new IReaderChapterChangeListener() {
             @Override
-            public void onChapterChange(BaseChapterBean curChapter, int direction) {
+            public void onChapterChange(ChapterBean curChapter, int direction) {
                 if (curChapter == null) return;
                 switch (direction) {
                     case IReaderDirection.NEXT:
@@ -306,12 +307,12 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
             }
 
             @Override
-            public void onNoPrePage(BaseChapterBean curChapter) {
+            public void onNoPrePage(ChapterBean curChapter) {
                 showToast("WAIT : pre");
             }
 
             @Override
-            public void onNoNextPage(BaseChapterBean curChapter) {
+            public void onNoNextPage(ChapterBean curChapter) {
                 showToast("WAIT : next");
             }
 
@@ -370,9 +371,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     }
 
 
-    private BookMarkFragment mBookMarkFragment;
-    private CatalogueFragment mCatalogFragment;
-
     /**
      * 初始化抽屉栏
      */
@@ -410,18 +408,11 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     }
 
     /**
-     * 获取数据 包括 书籍详情  章节列表 章节详情
-     */
-    private void getData() {
-        getBookDetail();
-        getChapterList();
-    }
-
-
-    /**
      * 获取书籍详情
      */
     private void getBookDetail() {
+        mProgressBar.setVisibility(View.VISIBLE);
+        mTvRetry.setVisibility(View.GONE);
         HttpUtils.getApiInstance()
                 .getLongStoryInfoByIdNew(mStoryId)
                 .compose(RxUtils.<BaseHttpResult<BookBean>>defaultSchedulers())
@@ -429,8 +420,24 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                 .subscribe(new DefaultObserver<BookBean>() {
                     @Override
                     protected void onSuccess(BookBean bookBean) {
-                        readerView.setBookName(bookBean.getName());
                         generateCover(bookBean);
+                        mBook = bookBean;
+                        getChapterList();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        super.onError(e);
+                        mProgressBar.setVisibility(View.GONE);
+                        mTvRetry.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    protected void onFail(BaseHttpResult<BookBean> result) {
+                        super.onFail(result);
+                        showToast(result.getMessage());
+                        mProgressBar.setVisibility(View.GONE);
+                        mTvRetry.setVisibility(View.VISIBLE);
                     }
                 });
     }
@@ -439,8 +446,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * 获取章节
      */
     private void getChapterList() {
-        mProgressBar.setVisibility(View.VISIBLE);
-        mTvRetry.setVisibility(View.GONE);
         HttpUtils.getApiInstance()
                 .searchChapterListVO(mStoryId)
                 .compose(RxUtils.<BaseHttpResult<ChapterListBean>>defaultSchedulers())
@@ -462,12 +467,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                     }
 
                     @Override
-                    protected void onFail(BaseHttpResult<ChapterListBean> result) {
-                        super.onFail(result);
-
-                    }
-
-                    @Override
                     protected void onException(ExceptionReason reason) {
                         super.onException(reason);
                         mProgressBar.setVisibility(View.GONE);
@@ -484,6 +483,10 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * @param chapterId 当前章节id
      */
     private void getChapterById(final String chapterId, final float progress) {
+        mProgressBar.setVisibility(View.VISIBLE);
+        mTvRetry.setVisibility(View.GONE);
+        readerView.clearData();
+        if (TextUtils.isEmpty(chapterId)) return;
         final IcoolApi api = HttpUtils.getApiInstance();
         final Observable<BaseHttpResult<ChapterBean>> cur = api.getChapterReadByIdV2(chapterId);
         Observable<BaseHttpResult<ChapterBean>> pre = api.getPreChapterReadByIdV2(chapterId);
@@ -605,7 +608,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_FULLSCREEN // hideReaderBar status bar
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); //隐藏状态栏
     }
 
 
@@ -616,20 +619,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-    }
-
-    private void setStatusBarVisible(boolean show) {
-        if (show) {
-            int uiFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-            uiFlags |= 0x00001000;
-            getWindow().getDecorView().setSystemUiVisibility(uiFlags);
-        } else {
-            int uiFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN;
-            uiFlags |= 0x00001000;
-            getWindow().getDecorView().setSystemUiVisibility(uiFlags);
-        }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); //显示状态栏
     }
 
     /**
@@ -708,7 +698,11 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      */
     @OnClick(R.id.tv_retry)
     public void retry() {
-        getChapterList();
+        if (mBook == null) {
+            getBookDetail();
+        } else {
+            getChapterList();
+        }
     }
 
     /**
@@ -756,7 +750,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
             }
         })
                 .show();
-        dialog.setOnDismissListener(mDismissListener);
     }
 
 
@@ -792,20 +785,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
             }
         })
                 .show();
-        dialog.setOnDismissListener(mDismissListener);
     }
-
-    /**
-     * 隐藏状态栏
-     */
-    private DialogInterface.OnDismissListener mDismissListener = new DialogInterface.OnDismissListener() {
-        @Override
-        public void onDismiss(DialogInterface dialog) {
-            //TODO 有问题
-//            hideSystemUI();
-            setStatusBarVisible(false);
-        }
-    };
 
 
     /**
@@ -865,7 +845,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                     @Override
                     public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
                         cover_img.setImageDrawable(resource);
-                        readerView.setCoverView(view);
+                        readerView.refreshCoverView();
                     }
                 });
     }
@@ -898,7 +878,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * 保存阅读进度
      */
     private void saveReadingProgress() {
-        BaseChapterBean chapter = readerView.getCurrentChapter();
+        ChapterBean chapter = readerView.getCurrentChapter();
         if (chapter == null) return;
         IReaderPersistence.saveBookRecord(mStoryId, chapter.getChapterid(), readerView.getReadingProgress());
     }
@@ -1409,7 +1389,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         mReaderTtsDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                hideSystemUI();
                 mSpeechSynthesizer.resume();//恢复朗读
             }
         });

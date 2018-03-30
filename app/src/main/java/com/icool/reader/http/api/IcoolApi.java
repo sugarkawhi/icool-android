@@ -2,8 +2,8 @@ package com.icool.reader.http.api;
 
 
 import com.icool.reader.bean.BookBean;
-import com.icool.reader.bean.ChapterBean;
 import com.icool.reader.bean.ChapterListBean;
+import com.icool.reader.component.reader.bean.ChapterBean;
 import com.icool.reader.http.BaseHttpResult;
 
 import io.reactivex.Observable;

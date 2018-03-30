@@ -7,7 +7,7 @@ import java.io.Serializable;
  * Created by ZhaoZongyao on 2018/1/11.
  */
 
-public class BaseChapterBean implements Serializable {
+public class ChapterBean implements Serializable {
 
     private int hasNext;
     private int hasPre;

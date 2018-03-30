@@ -52,7 +52,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.Catalo
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mContext, ReaderActivity.class);
-                intent.putExtra("storyid", book.getStoryid());
+                intent.putExtra(ReaderActivity.PARAM_STORY_ID, book.getStoryid());
                 mContext.startActivity(intent);
             }
         });
