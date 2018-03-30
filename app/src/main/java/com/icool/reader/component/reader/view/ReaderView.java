@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -33,6 +34,8 @@ import com.icool.reader.component.reader.utils.BitmapUtils;
 import com.icool.reader.component.reader.utils.ReaderLogger;
 import com.icool.reader.component.reader.utils.ScreenUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -107,7 +110,7 @@ public class ReaderView extends View {
         float footerHeight = array.getDimensionPixelSize(R.styleable.ReaderView_reader_footerHeight, 50);
         float padding = array.getDimensionPixelSize(R.styleable.ReaderView_reader_padding, 8);
         array.recycle();
-        int contentFontSize = IReaderPersistence.getFontSize(context);
+        int contentFontSize = IReaderPersistence.getFontSize();
         int lineSpacing = IReaderConfig.LineSpacing.DEFAULT;
         int letterSpacing = IReaderConfig.LetterSpacing.DEFAULT;
         int paragraphSpacing = IReaderConfig.ParagraphSpacing.DEFAULT;
@@ -131,6 +134,9 @@ public class ReaderView extends View {
         mPageManager = new PageManager(mWidth - padding - padding, mHeight - headerHeight - footerHeight,
                 letterSpacing, lineSpacing, paragraphSpacing,
                 20, mContentPaint, mChapterNamePaint);
+
+        mRespository = new PageRespository(mPageElement);
+
         init();
     }
 
@@ -138,9 +144,20 @@ public class ReaderView extends View {
      * 初始化
      */
     private void init() {
-        mRespository = new PageRespository(mPageElement);
-        int pageMode = IReaderPersistence.getPageMode(getContext());
+
+        int pageMode = IReaderPersistence.getPageMode();
         setPageMode(pageMode);
+        int typeface = IReaderPersistence.getTypeface();
+        setTypeface(typeface);
+        int background = IReaderPersistence.getBackground();
+        setReaderBackground(background);
+        int letterSpacing = IReaderPersistence.getLetterSpacing();
+        setLetterSpacing(letterSpacing);
+        int lineSpacing = IReaderPersistence.getLineSpacing();
+        setLineSpacing(lineSpacing);
+        int paragraphSpacing = IReaderPersistence.getParagraphSpacing();
+        setParagraphSpacing(paragraphSpacing);
+
     }
 
     /**
@@ -167,7 +184,6 @@ public class ReaderView extends View {
                 mPageMode = IReaderConfig.PageMode.NONE;
                 break;
         }
-        IReaderPersistence.savePageMode(getContext(), mode);
         mAnimController.setIReaderTouchListener(mReaderTouchListener);
     }
 
@@ -325,26 +341,59 @@ public class ReaderView extends View {
     }
 
     /**
-     * 背景与文字颜色 1对1
+     * 设置背景 {@link IReaderConfig.Background }
      *
-     * @param bitmap    绘制背景bitmap
-     * @param fontColor 背景对应字体颜色
+     * @param background 背景
      */
-    public void setReaderBackground(Bitmap bitmap, int fontColor) {
-        mReaderBackgroundBitmap = BitmapUtils.scaleBitmap(bitmap, mWidth, mHeight);
-        mPageElement.setBackgroundBitmap(mReaderBackgroundBitmap);
-        mContentPaint.setColor(fontColor);
-        mHeaderPaint.setColor(fontColor);
-        //重新绘制封面扉页
-        createCover();
-        //需要重绘当前页面
-        drawCurrentPage();
+    public void setReaderBackground(int background) {
+        try {
+            Bitmap bitmap = null;
+            InputStream is = null;
+            int fontColor = Color.BLACK;
+            int bgColor;
+            switch (background) {
+                case IReaderConfig.Background.DEFAULT:
+                    fontColor = ContextCompat.getColor(getContext(), R.color.reader_font_default);
+                    is = getResources().getAssets().open("background/kraft_paper_new.jpg");
+                    break;
+                case IReaderConfig.Background.IMAGE_BLUE:
+                    fontColor = ContextCompat.getColor(getContext(), R.color.reader_font_blue);
+                    is = getResources().getAssets().open("background/dandelion.jpg");
+                    break;
+                case IReaderConfig.Background.IMAGE_PURPLE:
+                    fontColor = ContextCompat.getColor(getContext(), R.color.reader_font_purple);
+                    is = getResources().getAssets().open("background/butterfly.jpg");
+                    break;
+                case IReaderConfig.Background.NIGHT:
+                    fontColor = ContextCompat.getColor(getContext(), R.color.reader_font_night);
+                    is = getResources().getAssets().open("background/alone.jpg");
+                    break;
+                case IReaderConfig.Background.COLOR_MATCHA:
+                    fontColor = ContextCompat.getColor(getContext(), R.color.reader_font_matcha);
+                    bgColor = ContextCompat.getColor(getContext(), R.color.reader_bg_matcha);
+                    bitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.RGB_565);
+                    Canvas canvas = new Canvas(bitmap);
+                    canvas.drawColor(bgColor);
+            }
+            if (is != null) {
+                bitmap = BitmapFactory.decodeStream(is);
+            }
+            mReaderBackgroundBitmap = BitmapUtils.scaleBitmap(bitmap, mWidth, mHeight);
+            mPageElement.setBackgroundBitmap(mReaderBackgroundBitmap);
+            mContentPaint.setColor(fontColor);
+            mHeaderPaint.setColor(fontColor);
+            //重新绘制封面扉页
+            createCover();
+            //需要重绘当前页面
+            drawCurrentPage();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
     /**
      * 设置文字大小
-     * TODO 1.需要重新分页2.分页后保持当前进度
      */
     public void setFontSize(int fontSize) {
         if (fontSize < IReaderConfig.FontSize.MIN) {
@@ -355,7 +404,7 @@ public class ReaderView extends View {
             ReaderLogger.w(TAG, "font size is too large");
             return;
         }
-        IReaderPersistence.saveFontSize(getContext(), fontSize);
+        IReaderPersistence.saveFontSize(fontSize);
         mContentPaint.setTextSize(fontSize);
         mChapterNamePaint.setTextSize(fontSize * IReaderConfig.RATIO_CHAPTER_CONTENT);
         //需要将 当前、前、后 章节重新分页
@@ -758,5 +807,28 @@ public class ReaderView extends View {
      */
     public PageData getNextPageFromCurChapter() {
         return mRespository.getNextPageFromCurChapter();
+    }
+
+    /**
+     * 设置字体
+     * {@link IReaderConfig.Typeface}
+     */
+    public void setTypeface(int tf) {
+        android.graphics.Typeface typeface;
+        switch (tf) {
+            case IReaderConfig.Typeface.CARTOON:
+                typeface = android.graphics.Typeface.createFromAsset(getResources().getAssets(), "fonts/fzkatong.ttf");
+                break;
+            case IReaderConfig.Typeface.FANTI:
+                typeface = android.graphics.Typeface.createFromAsset(getResources().getAssets(), "fonts/fzfanti.ttf");
+                break;
+            case IReaderConfig.Typeface.SONGTI:
+                typeface = android.graphics.Typeface.createFromAsset(getResources().getAssets(), "fonts/fzsongti.ttf");
+                break;
+            default:
+                typeface = android.graphics.Typeface.DEFAULT;
+        }
+        mPageManager.setTypeFace(typeface);
+        rePlanning();
     }
 }

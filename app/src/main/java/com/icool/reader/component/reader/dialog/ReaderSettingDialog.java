@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 
 import com.icool.reader.R;
+import com.icool.reader.component.reader.config.IReaderConfig;
 import com.icool.reader.component.reader.persistence.IReaderPersistence;
 
 import butterknife.BindView;
@@ -18,11 +19,6 @@ import static com.icool.reader.component.reader.config.IReaderConfig.PageMode.CO
 import static com.icool.reader.component.reader.config.IReaderConfig.PageMode.NONE;
 import static com.icool.reader.component.reader.config.IReaderConfig.PageMode.SIMULATION;
 import static com.icool.reader.component.reader.config.IReaderConfig.PageMode.SLIDE;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.COLOR_MATCHA;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.DEFAULT;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.IMAGE_BLUE;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.IMAGE_PURPLE;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.NIGHT;
 
 /**
  * 设置字体
@@ -54,6 +50,15 @@ public class ReaderSettingDialog extends BottomPopDialog {
     RadioButton readerSimulation;
     @BindView(R.id.reader_mode_none)
     RadioButton readerNone;
+    //typeface
+    @BindView(R.id.reader_tf_default)
+    RadioButton readerTfDefault;
+    @BindView(R.id.reader_tf_cartoon)
+    RadioButton readerTfCartoon;
+    @BindView(R.id.reader_tf_songti)
+    RadioButton readerTfSongti;
+    @BindView(R.id.reader_tf_fanti)
+    RadioButton readerTfFanti;
 
     public ReaderSettingDialog(Context context) {
         super(context);
@@ -70,9 +75,9 @@ public class ReaderSettingDialog extends BottomPopDialog {
      * 初始化操作
      */
     private void init() {
-        int fontSize = IReaderPersistence.getFontSize(getContext());
+        int fontSize = IReaderPersistence.getFontSize();
         readerFontSize.setText(String.valueOf(fontSize));
-        int mode = IReaderPersistence.getPageMode(getContext());
+        int mode = IReaderPersistence.getPageMode();
         switch (mode) {
             case COVER:
                 readerCover.setChecked(true);
@@ -87,22 +92,37 @@ public class ReaderSettingDialog extends BottomPopDialog {
                 readerNone.setChecked(true);
                 break;
         }
-        int background = IReaderPersistence.getBackground(getContext());
+        int background = IReaderPersistence.getBackground();
         switch (background) {
-            case IMAGE_BLUE:
+            case IReaderConfig.Background.IMAGE_BLUE:
                 readerBgBlue.setChecked(true);
                 break;
-            case IMAGE_PURPLE:
+            case IReaderConfig.Background.IMAGE_PURPLE:
                 readerBgPurple.setChecked(true);
                 break;
-            case DEFAULT:
+            case IReaderConfig.Background.DEFAULT:
                 readerBgDefault.setChecked(true);
                 break;
-            case COLOR_MATCHA:
+            case IReaderConfig.Background.COLOR_MATCHA:
                 readerBgMatcha.setChecked(true);
                 break;
-            case NIGHT:
+            case IReaderConfig.Background.NIGHT:
                 readerBgNight.setChecked(true);
+                break;
+        }
+        int typeface = IReaderPersistence.getTypeface();
+        switch (typeface) {
+            case IReaderConfig.Typeface.DEFAULT:
+                readerTfDefault.setChecked(true);
+                break;
+            case IReaderConfig.Typeface.CARTOON:
+                readerTfCartoon.setChecked(true);
+                break;
+            case IReaderConfig.Typeface.FANTI:
+                readerTfFanti.setChecked(true);
+                break;
+            case IReaderConfig.Typeface.SONGTI:
+                readerTfSongti.setChecked(true);
                 break;
         }
     }
@@ -117,7 +137,7 @@ public class ReaderSettingDialog extends BottomPopDialog {
      */
     @OnClick(R.id.reader_font_big)
     public void fontBig() {
-        int currentFont = IReaderPersistence.getFontSize(getContext());
+        int currentFont = IReaderPersistence.getFontSize();
         currentFont++;
 
         readerFontSize.setText(String.valueOf(currentFont));
@@ -129,7 +149,7 @@ public class ReaderSettingDialog extends BottomPopDialog {
      */
     @OnClick(R.id.reader_font_small)
     public void fontSmall() {
-        int currentFont = IReaderPersistence.getFontSize(getContext());
+        int currentFont = IReaderPersistence.getFontSize();
         currentFont--;
         readerFontSize.setText(String.valueOf(currentFont));
         if (mSettingListener != null) mSettingListener.onFontSizeChange(currentFont);
@@ -141,25 +161,26 @@ public class ReaderSettingDialog extends BottomPopDialog {
     @OnCheckedChanged({R.id.reader_bg_blue, R.id.reader_bg_purple, R.id.reader_bg_default, R.id.reader_bg_matcha, R.id.reader_bg_night})
     public void selectBg(CompoundButton view, boolean isChecked) {
         if (!isChecked) return;
-        int background = DEFAULT;
+        int background;
         switch (view.getId()) {
             case R.id.reader_bg_blue:
-                background = (IMAGE_BLUE);
+                background = (IReaderConfig.Background.IMAGE_BLUE);
                 break;
             case R.id.reader_bg_purple:
-                background = (IMAGE_PURPLE);
-                break;
-            case R.id.reader_bg_default:
-                background = (DEFAULT);
+                background = (IReaderConfig.Background.IMAGE_PURPLE);
                 break;
             case R.id.reader_bg_matcha:
-                background = (COLOR_MATCHA);
+                background = (IReaderConfig.Background.COLOR_MATCHA);
                 break;
             case R.id.reader_bg_night:
-                background = (NIGHT);
+                background = (IReaderConfig.Background.NIGHT);
+                break;
+            case R.id.reader_bg_default:
+            default:
+                background = (IReaderConfig.Background.DEFAULT);
                 break;
         }
-        IReaderPersistence.saveBackground(getContext(), background);
+        IReaderPersistence.saveBackground(background);
         if (mSettingListener != null) mSettingListener.onBackgroundChange(background);
 
     }
@@ -185,7 +206,35 @@ public class ReaderSettingDialog extends BottomPopDialog {
                 pageMode = NONE;
                 break;
         }
+        IReaderPersistence.savePageMode(pageMode);
         if (mSettingListener != null) mSettingListener.onPageModeChange(pageMode);
+
+    }
+
+    /**
+     * 选择翻页模式
+     */
+    @OnCheckedChanged({R.id.reader_tf_default, R.id.reader_tf_fanti, R.id.reader_tf_cartoon, R.id.reader_tf_songti})
+    public void selectTypeface(CompoundButton view, boolean isChecked) {
+        if (!isChecked) return;
+        int typeface;
+        switch (view.getId()) {
+            case R.id.reader_tf_fanti:
+                typeface = IReaderConfig.Typeface.FANTI;
+                break;
+            case R.id.reader_tf_cartoon:
+                typeface = IReaderConfig.Typeface.CARTOON;
+                break;
+            case R.id.reader_tf_songti:
+                typeface = IReaderConfig.Typeface.SONGTI;
+                break;
+            case R.id.reader_tf_default:
+            default:
+                typeface = IReaderConfig.Typeface.DEFAULT;
+                break;
+        }
+        IReaderPersistence.saveTypeface(typeface);
+        if (mSettingListener != null) mSettingListener.onTypefaceChange(typeface);
 
     }
 
@@ -196,5 +245,7 @@ public class ReaderSettingDialog extends BottomPopDialog {
         void onBackgroundChange(int background);
 
         void onPageModeChange(int pageMode);
+
+        void onTypefaceChange(int typeface);
     }
 }

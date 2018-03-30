@@ -4,13 +4,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 
-import com.icool.reader.R;
 import com.icool.reader.base.IcoolApplication;
 import com.icool.reader.component.reader.config.IReaderConfig;
 import com.icool.reader.component.reader.dao.BookMarkBean;
 import com.icool.reader.component.reader.dao.BookRecordBean;
 import com.icool.reader.component.reader.data.PageData;
-import com.icool.reader.component.reader.utils.ReaderLogger;
 import com.icool.reader.gen.BookMarkBeanDao;
 import com.icool.reader.gen.BookRecordBeanDao;
 import com.icool.reader.gen.DaoSession;
@@ -19,7 +17,6 @@ import com.icool.reader.utils.Logger;
 import org.greenrobot.greendao.query.QueryBuilder;
 import org.greenrobot.greendao.query.WhereCondition;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -37,25 +34,31 @@ public class IReaderPersistence {
     //翻页模式
     private static final String READER_PAGE_MODE = "READER_PAGE_MODE";
     //背景
-    protected static final String READER_BACKGROUND = "READER_BACKGROUND";
+    private static final String READER_BACKGROUND = "READER_BACKGROUND";
     //字体颜色
-    protected static final String READER_FONT_COLOR = "READER_FONT_COLOR";
-
+    private static final String READER_FONT_COLOR = "READER_FONT_COLOR";
+    //字体
+    private static final String READER_TYPEFACE = "READER_TYPEFACE";
     //语音合成速度
-    protected static final String READER_TTS_SPEED = "READER_TTS_SPEED";
+    private static final String READER_TTS_SPEED = "READER_TTS_SPEED";
     //语音合成发音人
-    protected static final String READER_TTS_SPEAKER = "READER_TTS_SPEAKER";
+    private static final String READER_TTS_SPEAKER = "READER_TTS_SPEAKER";
+    //字间距
+    private static final String READER_SPACING_LETTER = "READER_SPACING_LETTER";
+    //行间距
+    private static final String READER_SPACING_LINE = "READER_SPACING_LINE";
+    //段间距
+    private static final String READER_SPACING_PARAGRAPH = "READER_SPACING_PARAGRAPH";
 
-
-    protected static SharedPreferences getSP(Context context) {
-        return context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
+    private static SharedPreferences getSP() {
+        return IcoolApplication.getInstance().getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
     }
 
     /**
      * 获取当前文字大小
      */
-    public static int getFontSize(Context context) {
-        return getSP(context).getInt(READER_FONT_SIZE, IReaderConfig.FontSize.DEFAULT);
+    public static int getFontSize() {
+        return getSP().getInt(READER_FONT_SIZE, IReaderConfig.FontSize.DEFAULT);
     }
 
     /**
@@ -63,15 +66,15 @@ public class IReaderPersistence {
      * <p>
      * 在View设置文字大小中已经做了保存，无需自行处理
      */
-    public static void saveFontSize(Context context, int fontSize) {
-        getSP(context).edit().putInt(READER_FONT_SIZE, fontSize).apply();
+    public static void saveFontSize(int fontSize) {
+        getSP().edit().putInt(READER_FONT_SIZE, fontSize).apply();
     }
 
     /**
      * 获取当前翻页模式
      */
-    public static int getPageMode(Context context) {
-        return getSP(context).getInt(READER_PAGE_MODE, IReaderConfig.PageMode.COVER);
+    public static int getPageMode() {
+        return getSP().getInt(READER_PAGE_MODE, IReaderConfig.PageMode.COVER);
     }
 
     /**
@@ -79,8 +82,8 @@ public class IReaderPersistence {
      * <p>
      * 在View切换中已经做了保存，无需自行处理
      */
-    public static void savePageMode(Context context, int mode) {
-        getSP(context).edit().putInt(READER_PAGE_MODE, mode).apply();
+    public static void savePageMode(int mode) {
+        getSP().edit().putInt(READER_PAGE_MODE, mode).apply();
     }
 
     /**
@@ -88,8 +91,8 @@ public class IReaderPersistence {
      *
      * @param speed 0-10
      */
-    public static void saveTtsSpeed(Context context, int speed) {
-        getSP(context).edit().putInt(READER_TTS_SPEED, speed).apply();
+    public static void saveTtsSpeed(int speed) {
+        getSP().edit().putInt(READER_TTS_SPEED, speed).apply();
     }
 
     /**
@@ -97,15 +100,15 @@ public class IReaderPersistence {
      *
      * @return
      */
-    public static int getTtsSpeed(Context context) {
-        return getSP(context).getInt(READER_TTS_SPEED, 5);
+    public static int getTtsSpeed() {
+        return getSP().getInt(READER_TTS_SPEED, 5);
     }
 
     /**
      * 保存语音合成发音人
      */
-    public static void saveTtsSpeaker(Context context, int speaker) {
-        getSP(context).edit().putInt(READER_TTS_SPEAKER, speaker).apply();
+    public static void saveTtsSpeaker(int speaker) {
+        getSP().edit().putInt(READER_TTS_SPEAKER, speaker).apply();
     }
 
     /**
@@ -113,62 +116,95 @@ public class IReaderPersistence {
      *
      * @return
      */
-    public static int getTtsSpeaker(Context context) {
-        return getSP(context).getInt(READER_TTS_SPEAKER, IReaderConfig.Speaker.FEMALE);
+    public static int getTtsSpeaker() {
+        return getSP().getInt(READER_TTS_SPEAKER, IReaderConfig.Speaker.FEMALE);
     }
 
-    //背景
-    public interface Background {
-        //默认
-        int DEFAULT = 1;
-        //图片-蓝色
-        int IMAGE_BLUE = 2;
-        //图片-紫色
-        int IMAGE_PURPLE = 3;
-        //纯色-抹茶
-        int COLOR_MATCHA = 4;
-        //夜间模式
-        int NIGHT = 5;
-    }
-
-    //字体颜色 对应于背景
-    public interface FontColor {
-        //默认
-        int DEFAULT = R.color.reader_font_default;
-        //对应于蓝色背景
-        int BLUE = R.color.reader_font_blue;
-        //对应于紫色背景
-        int PURPLE = R.color.reader_font_purple;
-        //对应于抹茶色背景
-        int MATCHA = R.color.reader_font_matcha;
-    }
 
     /**
      * 获取背景
      */
-    public static int getBackground(Context context) {
-        return getSP(context).getInt(READER_BACKGROUND, Background.DEFAULT);
+    public static int getBackground() {
+        return getSP().getInt(READER_BACKGROUND, IReaderConfig.Background.DEFAULT);
     }
 
     /**
      * 保存背景
      */
-    public static void saveBackground(Context context, int background) {
-        getSP(context).edit().putInt(READER_BACKGROUND, background).apply();
+    public static void saveBackground(int background) {
+        getSP().edit().putInt(READER_BACKGROUND, background).apply();
     }
 
     /**
+     * unused
      * 获取字体颜色
      */
-    public static int getFontColor(Context context) {
-        return getSP(context).getInt(READER_FONT_COLOR, FontColor.DEFAULT);
+    public static int getFontColor() {
+        return getSP().getInt(READER_FONT_COLOR, IReaderConfig.FontColor.DEFAULT);
     }
 
     /**
+     * unused
      * 保存字体颜色
      */
-    public static void saveFontColor(Context context, int fontColor) {
-        getSP(context).edit().putInt(READER_FONT_COLOR, fontColor).apply();
+    public static void saveFontColor(int fontColor) {
+        getSP().edit().putInt(READER_FONT_COLOR, fontColor).apply();
+    }
+
+    /**
+     * 保存字体
+     */
+    public static void saveTypeface(int typeface) {
+        getSP().edit().putInt(READER_TYPEFACE, typeface).apply();
+    }
+
+    /**
+     * 获取字体
+     */
+    public static int getTypeface() {
+        return getSP().getInt(READER_TYPEFACE, IReaderConfig.Typeface.DEFAULT);
+    }
+
+    /**
+     * 保存字间距
+     */
+    public static void saveLetterSpacing(int letterSpacing) {
+        getSP().edit().putInt(READER_SPACING_LETTER, letterSpacing).apply();
+    }
+
+    /**
+     * 获取字体间距
+     */
+    public static int getLetterSpacing() {
+        return getSP().getInt(READER_SPACING_LETTER, IReaderConfig.LetterSpacing.DEFAULT);
+    }
+
+    /**
+     * 保存行间距
+     */
+    public static void saveLineSpacing(int lineSpacing) {
+        getSP().edit().putInt(READER_SPACING_LINE, lineSpacing).apply();
+    }
+
+    /**
+     * 获取行间距
+     */
+    public static int getLineSpacing() {
+        return getSP().getInt(READER_SPACING_LINE, IReaderConfig.LineSpacing.DEFAULT);
+    }
+
+    /**
+     * 保存段间距
+     */
+    public static void saveParagraphSpacing(int paragraphSpacing) {
+        getSP().edit().putInt(READER_SPACING_PARAGRAPH, paragraphSpacing).apply();
+    }
+
+    /**
+     * 获取段间距
+     */
+    public static int getParagraphSpacing() {
+        return getSP().getInt(READER_SPACING_PARAGRAPH, IReaderConfig.ParagraphSpacing.DEFAULT);
     }
 
 

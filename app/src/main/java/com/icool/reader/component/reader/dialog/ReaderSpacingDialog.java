@@ -5,6 +5,8 @@ import android.widget.SeekBar;
 
 
 import com.icool.reader.R;
+import com.icool.reader.component.reader.config.IReaderConfig;
+import com.icool.reader.component.reader.persistence.IReaderPersistence;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -24,10 +26,29 @@ public class ReaderSpacingDialog extends BottomPopDialog {
 
     private IReaderSpacingChangeListener mSpacingChangeListener;
 
+    private int letterOffset = IReaderConfig.LetterSpacing.MAX - IReaderConfig.LetterSpacing.MIN;
+    private int lineOffset = IReaderConfig.LineSpacing.MAX - IReaderConfig.LineSpacing.MIN;
+    private int paragraphOffset = IReaderConfig.ParagraphSpacing.MAX - IReaderConfig.ParagraphSpacing.MIN;
+
     public ReaderSpacingDialog(Context context) {
         super(context);
         ButterKnife.bind(this, getContentView());
+        init();
         setListener();
+    }
+
+    private void init() {
+        int letterSpacing = IReaderPersistence.getLetterSpacing();
+        int letterProgress = (int) ((letterSpacing - IReaderConfig.LetterSpacing.MIN) * 1f / letterOffset * 100);
+        mLetterSeekBar.setProgress(letterProgress);
+
+        int lineSpacing = IReaderPersistence.getLineSpacing();
+        int lineProgress = (int) ((lineSpacing - IReaderConfig.LineSpacing.MIN) * 1f / lineOffset * 100);
+        mLineSeekBar.setProgress(lineProgress);
+
+        int paragraphSpcing = IReaderPersistence.getParagraphSpacing();
+        int paragraphProgress = (int) ((paragraphSpcing - IReaderConfig.ParagraphSpacing.MIN) * 1f / paragraphOffset * 100);
+        mParagraphSeekBar.setProgress(paragraphProgress);
     }
 
     @Override
@@ -46,21 +67,6 @@ public class ReaderSpacingDialog extends BottomPopDialog {
         return this;
     }
 
-    public ReaderSpacingDialog setLetterSpacing(int progress) {
-        mLetterSeekBar.setProgress(progress);
-        return this;
-    }
-
-    public ReaderSpacingDialog setLineSpacing(int progress) {
-        mLineSeekBar.setProgress(progress);
-        return this;
-    }
-
-    public ReaderSpacingDialog setParagraphSpacing(int progress) {
-        mParagraphSeekBar.setProgress(progress);
-        return this;
-    }
-
     private class MySeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
 
         private SeekBar mSeekBar;
@@ -71,18 +77,7 @@ public class ReaderSpacingDialog extends BottomPopDialog {
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if (mSpacingChangeListener == null) return;
-            switch (mSeekBar.getId()) {
-                case R.id.reader_seekBar_letterSpacing:
-                    mSpacingChangeListener.onLetterSpacingChange(progress);
-                    break;
-                case R.id.reader_seekBar_linerSpacing:
-                    mSpacingChangeListener.onLineSpacingChange(progress);
-                    break;
-                case R.id.reader_seekBar_paragraphSpacing:
-                    mSpacingChangeListener.onParagraphSpacingChange(progress);
-                    break;
-            }
+
         }
 
         @Override
@@ -92,16 +87,34 @@ public class ReaderSpacingDialog extends BottomPopDialog {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-
+            if (mSpacingChangeListener == null) return;
+            int progress = seekBar.getProgress();
+            switch (mSeekBar.getId()) {
+                case R.id.reader_seekBar_letterSpacing:
+                    int letterSpacing = (int) (progress / 100f * letterOffset) + IReaderConfig.LetterSpacing.MIN;
+                    mSpacingChangeListener.onLetterSpacingChange(letterSpacing);
+                    IReaderPersistence.saveLetterSpacing(letterSpacing);
+                    break;
+                case R.id.reader_seekBar_linerSpacing:
+                    int lineSpacing = (int) (progress / 100f * lineOffset) + IReaderConfig.LineSpacing.MIN;
+                    mSpacingChangeListener.onLineSpacingChange(lineSpacing);
+                    IReaderPersistence.saveLineSpacing(lineSpacing);
+                    break;
+                case R.id.reader_seekBar_paragraphSpacing:
+                    int paragraphSpacing = (int) (progress / 100f * paragraphOffset) + IReaderConfig.ParagraphSpacing.MIN;
+                    mSpacingChangeListener.onParagraphSpacingChange(paragraphSpacing);
+                    IReaderPersistence.saveParagraphSpacing(paragraphSpacing);
+                    break;
+            }
         }
     }
 
     public interface IReaderSpacingChangeListener {
-        void onLetterSpacingChange(int progress);
+        void onLetterSpacingChange(int letterSpacing);
 
-        void onLineSpacingChange(int progress);
+        void onLineSpacingChange(int lineSpacing);
 
-        void onParagraphSpacingChange(int progress);
+        void onParagraphSpacingChange(int paragraphSpacing);
     }
 
 }

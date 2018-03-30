@@ -147,7 +147,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
             android:layout_weight="1"
             android:background="@drawable/abc_radio_reader_page"
             android:button="@null"
@@ -162,6 +161,8 @@
             android:id="@+id/reader_mode_simulation"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
             android:layout_weight="1"
             android:background="@drawable/abc_radio_reader_page"
             android:button="@null"
@@ -171,7 +172,7 @@
             android:paddingTop="5dp"
             android:text="仿真"
             android:textColor="@color/white"
-            android:visibility="gone" />
+            android:visibility="visible" />
 
         <RadioButton
             android:id="@+id/reader_mode_none"
@@ -189,4 +190,72 @@
 
     </RadioGroup>
 
+    <RadioGroup
+        android:id="@+id/reader_typeface"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/reader_tf_default"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="20dp"
+            android:layout_weight="1"
+            android:background="@drawable/abc_radio_reader_page"
+            android:button="@null"
+            android:checked="false"
+            android:gravity="center"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:text="默认"
+            android:textColor="@color/white" />
+
+        <RadioButton
+            android:id="@+id/reader_tf_cartoon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/abc_radio_reader_page"
+            android:button="@null"
+            android:checked="true"
+            android:gravity="center"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:text="卡通"
+            android:textColor="@color/white" />
+
+        <RadioButton
+            android:id="@+id/reader_tf_songti"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_weight="1"
+            android:background="@drawable/abc_radio_reader_page"
+            android:button="@null"
+            android:checked="false"
+            android:gravity="center"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:text="宋体"
+            android:textColor="@color/white" />
+
+        <RadioButton
+            android:id="@+id/reader_tf_fanti"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/abc_radio_reader_page"
+            android:button="@null"
+            android:checked="false"
+            android:gravity="center"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:text="繁体"
+            android:textColor="@color/white" />
+
+
+    </RadioGroup>
 </LinearLayout>

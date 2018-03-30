@@ -6,21 +6,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -80,7 +74,6 @@ import com.ogaclejapan.smarttablayout.SmartTabLayout;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,12 +86,6 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function3;
-
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.COLOR_MATCHA;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.DEFAULT;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.IMAGE_BLUE;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.IMAGE_PURPLE;
-import static com.icool.reader.component.reader.persistence.IReaderPersistence.Background.NIGHT;
 
 
 /**
@@ -148,7 +135,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     private int mAppBarHeight;
     private int readerBottomHeight;
     private boolean isShow;
-    private int mScreenWidth, mScreenHeight;
     //书籍详细信息
     private BookBean mBook;
 
@@ -166,8 +152,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * 初始化操作
      */
     private void init() {
-        mScreenWidth = ScreenUtils.getScreenWidth(this);
-        mScreenHeight = ScreenUtils.getScreenHeight(this);
         registerReaderReceiver();
         initDrawer();
         initPtmLayout();
@@ -282,8 +266,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      */
     private void initReaderView() {
         //设置背景颜色(ps:也设置对应字体颜色)
-        int background = IReaderPersistence.getBackground(this);
-        initReaderBackground(background);
+
         readerView.timeChange(TimeFormatUtils.hhmm(System.currentTimeMillis()));
         readerView.setReaderTouchListener(new IReaderTouchListener() {
             @Override
@@ -386,50 +369,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         registerReceiver(myReceiver, mfilter);
     }
 
-
-    /**
-     * 初始化阅读器背景
-     *
-     * @param background 背景
-     */
-    private void initReaderBackground(int background) {
-        try {
-            Bitmap bitmap = null;
-            InputStream is = null;
-            int fontColor = Color.BLACK;
-            int bgColor;
-            switch (background) {
-                case DEFAULT:
-                    fontColor = ContextCompat.getColor(this, R.color.reader_font_default);
-                    is = getAssets().open("background/kraft_paper_new.jpg");
-                    break;
-                case IMAGE_BLUE:
-                    fontColor = ContextCompat.getColor(this, R.color.reader_font_blue);
-                    is = getAssets().open("background/dandelion.jpg");
-                    break;
-                case IMAGE_PURPLE:
-                    fontColor = ContextCompat.getColor(this, R.color.reader_font_purple);
-                    is = getAssets().open("background/butterfly.jpg");
-                    break;
-                case NIGHT:
-                    fontColor = ContextCompat.getColor(this, R.color.reader_font_night);
-                    is = getAssets().open("background/alone.jpg");
-                    break;
-                case COLOR_MATCHA:
-                    fontColor = ContextCompat.getColor(this, R.color.reader_font_matcha);
-                    bgColor = ContextCompat.getColor(this, R.color.reader_bg_matcha);
-                    bitmap = Bitmap.createBitmap(mScreenWidth, mScreenHeight, Bitmap.Config.RGB_565);
-                    Canvas canvas = new Canvas(bitmap);
-                    canvas.drawColor(bgColor);
-            }
-            if (is != null) {
-                bitmap = BitmapFactory.decodeStream(is);
-            }
-            readerView.setReaderBackground(bitmap, fontColor);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     private BookMarkFragment mBookMarkFragment;
     private CatalogueFragment mCatalogFragment;
@@ -803,12 +742,17 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
 
             @Override
             public void onBackgroundChange(int background) {
-                initReaderBackground(background);
+                readerView.setReaderBackground(background);
             }
 
             @Override
             public void onPageModeChange(int pageMode) {
                 readerView.setPageMode(pageMode);
+            }
+
+            @Override
+            public void onTypefaceChange(int typeface) {
+                readerView.setTypeface(typeface);
             }
         })
                 .show();
@@ -830,28 +774,23 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      */
     private void showSpacingDialog() {
         ReaderSpacingDialog dialog = new ReaderSpacingDialog(this);
-        dialog.setLetterSpacing(10)
-                .setLineSpacing(20)
-                .setParagraphSpacing(30)
-                .setSpacingChangeListener(new ReaderSpacingDialog.IReaderSpacingChangeListener() {
-                    @Override
-                    public void onLetterSpacingChange(int progress) {
-                        int offset = IReaderConfig.LetterSpacing.MAX - IReaderConfig.LetterSpacing.MIN;
-                        readerView.setLetterSpacing((int) (IReaderConfig.LetterSpacing.MIN + offset * progress / 100f));
-                    }
+        dialog.setSpacingChangeListener(new ReaderSpacingDialog.IReaderSpacingChangeListener() {
 
-                    @Override
-                    public void onLineSpacingChange(int progress) {
-                        int offset = IReaderConfig.LineSpacing.MAX - IReaderConfig.LineSpacing.MIN;
-                        readerView.setLineSpacing((int) (IReaderConfig.LineSpacing.MIN + offset * progress / 100f));
-                    }
+            @Override
+            public void onLetterSpacingChange(int letterSpacing) {
+                readerView.setLetterSpacing(letterSpacing);
+            }
 
-                    @Override
-                    public void onParagraphSpacingChange(int progress) {
-                        int offset = IReaderConfig.ParagraphSpacing.MAX - IReaderConfig.ParagraphSpacing.MIN;
-                        readerView.setParagraphSpacing((int) (IReaderConfig.ParagraphSpacing.MIN + offset * progress / 100f));
-                    }
-                })
+            @Override
+            public void onLineSpacingChange(int lineSpacing) {
+                readerView.setLineSpacing(lineSpacing);
+            }
+
+            @Override
+            public void onParagraphSpacingChange(int paragraphSpacing) {
+                readerView.setParagraphSpacing(paragraphSpacing);
+            }
+        })
                 .show();
         dialog.setOnDismissListener(mDismissListener);
     }
@@ -1275,11 +1214,11 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     public void setParams() {
         // 以下参数均为选填
         // 设置在线发声音人： 0 普通女声（默认） 1 普通男声 2 特别男声 3 情感男声<度逍遥> 4 情感儿童声<度丫丫>
-        mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_SPEAKER, String.valueOf(IReaderPersistence.getTtsSpeaker(this)));
+        mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_SPEAKER, String.valueOf(IReaderPersistence.getTtsSpeaker()));
         // 设置合成的音量，0-9 ，默认 5
         // mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_VOLUME, "5");
         // 设置合成的语速，0-9 ，默认 5
-        mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_SPEED, String.valueOf(IReaderPersistence.getTtsSpeed(this)));
+        mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_SPEED, String.valueOf(IReaderPersistence.getTtsSpeed()));
         // 设置合成的语调，0-9 ，默认 5
         // mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_PITCH, "5");
 
@@ -1291,7 +1230,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         // MIX_MODE_HIGH_SPEED_SYNTHESIZE, 2G 3G 4G wifi状态下使用在线，其它状态离线。在线状态下，请求超时1.2s自动转离线
 
         // 离线资源文件
-        OfflineResource offlineResource = createOfflineResource(IReaderPersistence.getTtsSpeaker(this));
+        OfflineResource offlineResource = createOfflineResource(IReaderPersistence.getTtsSpeaker());
         // 声学模型文件路径 (离线引擎使用), 请确认下面两个文件存在
         mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_TTS_TEXT_MODEL_FILE, offlineResource.getTextFilename());
         mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_TTS_SPEECH_MODEL_FILE, offlineResource.getModelFilename());
@@ -1441,20 +1380,20 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      */
     private void showTtsDialog() {
         mReaderTtsDialog = new ReaderTtsDialog(this);
-        mReaderTtsDialog.setTtsSpeed(IReaderPersistence.getTtsSpeed(this))
-                .setTtsSpeaker(IReaderPersistence.getTtsSpeaker(this))
+        mReaderTtsDialog.setTtsSpeed(IReaderPersistence.getTtsSpeed())
+                .setTtsSpeaker(IReaderPersistence.getTtsSpeaker())
                 .setListener(new ReaderTtsDialog.IReaderTtsChangeListener() {
                     @Override
                     public void onTtsSpeedChange(int speed) {
-                        IReaderPersistence.saveTtsSpeed(ReaderActivity.this, speed);
+                        IReaderPersistence.saveTtsSpeed(speed);
                         //语速变了 TODO 需要重新合成
                         mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_SPEED, String.valueOf(speed));
-                        reSetParams(IReaderPersistence.getTtsSpeaker(ReaderActivity.this));
+                        reSetParams(IReaderPersistence.getTtsSpeaker());
                     }
 
                     @Override
                     public void onTtsSpeakerChange(int speaker) {
-                        IReaderPersistence.saveTtsSpeaker(ReaderActivity.this, speaker);
+                        IReaderPersistence.saveTtsSpeaker(speaker);
                         //发音人变了 TODO  需要重新合成
                         mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_SPEAKER, String.valueOf(speaker));
                         reSetParams(speaker);

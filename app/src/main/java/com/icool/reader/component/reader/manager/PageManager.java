@@ -8,12 +8,12 @@ import android.text.TextUtils;
 
 
 import com.icool.reader.component.reader.bean.BaseChapterBean;
+import com.icool.reader.component.reader.config.IReaderConfig;
 import com.icool.reader.component.reader.dao.BookMarkBean;
 import com.icool.reader.component.reader.data.LetterData;
 import com.icool.reader.component.reader.data.LineData;
 import com.icool.reader.component.reader.data.PageData;
 import com.icool.reader.component.reader.persistence.IReaderPersistence;
-import com.icool.reader.utils.Logger;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -22,12 +22,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.icool.reader.component.reader.config.IReaderConfig.CHAPTER_NAME_MARGIN;
-import static com.icool.reader.component.reader.config.IReaderConfig.MARK_PROGRESS_SIGNIFICANCE;
 
 
 /**
@@ -437,7 +435,7 @@ public class PageManager {
     }
 
     /**
-     * todo 未使用
+     * unused
      *
      * @param bookName 书籍名
      */
@@ -445,4 +443,12 @@ public class PageManager {
 //        mBookName = bookName;
     }
 
+    /**
+     * 设置字体
+     * {@link IReaderConfig.Typeface}
+     */
+    public void setTypeFace(android.graphics.Typeface typeface) {
+        mContentPaint.setTypeface(typeface);
+        mChapterNamePaint.setTypeface(typeface);
+    }
 }
