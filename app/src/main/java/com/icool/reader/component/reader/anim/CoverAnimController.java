@@ -31,11 +31,6 @@ public class CoverAnimController extends PageAnimController {
     }
 
 
-    @Override
-    void drawStatic(Canvas canvas) {
-        canvas.drawBitmap(mCurrentBitmap, 0, 0, null);
-    }
-
     //添加阴影
     public void addShadow(int left, Canvas canvas) {
         mBackShadowDrawableLR.setBounds(left, 0, left + 20, mReaderHeight);

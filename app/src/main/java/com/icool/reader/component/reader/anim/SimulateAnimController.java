@@ -2,6 +2,7 @@ package com.icool.reader.component.reader.anim;
 
 import android.graphics.Canvas;
 
+import com.icool.reader.component.reader.config.IReaderDirection;
 import com.icool.reader.component.reader.element.PageElement;
 import com.icool.reader.component.reader.view.ReaderView;
 
@@ -16,13 +17,15 @@ public class SimulateAnimController extends PageAnimController {
         super(readerView, readerWidth, readerHeight, pageElement, pageChangeListener);
     }
 
-    @Override
-    void drawStatic(Canvas canvas) {
-
-    }
 
     @Override
     void drawMove(Canvas canvas) {
-
+        switch (mDirection) {
+            case IReaderDirection.NEXT:
+                break;
+            case IReaderDirection.PRE:
+                break;
+        }
     }
+
 }

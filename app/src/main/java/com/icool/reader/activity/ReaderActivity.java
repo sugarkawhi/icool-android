@@ -145,7 +145,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reader);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         ButterKnife.bind(this);
         mStoryId = getIntent().getStringExtra(PARAM_STORY_ID);
         init();
@@ -1338,7 +1338,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     protected void onResume() {
         super.onResume();
         resumeTts();
-        hideSystemUI();
     }
 
 

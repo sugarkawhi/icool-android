@@ -21,11 +21,6 @@ public class NoneAnimController extends PageAnimController {
 
 
     @Override
-    void drawStatic(Canvas canvas) {
-        canvas.drawBitmap(mCurrentBitmap, 0, 0, null);
-    }
-
-    @Override
     void drawMove(Canvas canvas) {
         canvas.drawBitmap(mCurrentBitmap, 0, 0, null);
     }

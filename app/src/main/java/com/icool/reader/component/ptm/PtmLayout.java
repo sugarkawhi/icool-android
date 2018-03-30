@@ -128,7 +128,6 @@ public class PtmLayout extends ViewGroup {
     @Override
 
     protected void onLayout(boolean b, int i, int i1, int i2, int i3) {
-        PtmLogger.e(TAG, "onLayout: ");
         layoutChildren();
     }
 
@@ -185,7 +184,6 @@ public class PtmLayout extends ViewGroup {
         if (mPtmHeader != null) {
             measureChildWithMargins(mPtmHeader, widthMeasureSpec, 0, heightMeasureSpec, 0);
             MarginLayoutParams lp = (MarginLayoutParams) mPtmHeader.getLayoutParams();
-//            mHeaderHeight = mPtmHeader.getMeasuredHeight() + lp.topMargin + lp.bottomMargin;
             mPtmHeaderHeight = mPtmHeader.getPtmHeaderHeight();
         }
 
@@ -209,7 +207,7 @@ public class PtmLayout extends ViewGroup {
         if (childCount > 3) {
             throw new IllegalStateException("PtmLayout only contain three child ");
         } else if (childCount == 3) {
-            Log.i(TAG, "child is ok");
+            PtmLogger.i(TAG, "child is ok");
             mContentView = getChildAt(2);
         } else if (childCount == 2) {
             TextView errorView = new TextView(getContext());
@@ -232,7 +230,7 @@ public class PtmLayout extends ViewGroup {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if (isScroll) return true;
-        PtmLogger.e(TAG, "onInterceptTouchEvent");
+        PtmLogger.i(TAG, "onInterceptTouchEvent");
         int x = (int) ev.getX();
         int y = (int) ev.getY();
         mTouchX = x;
@@ -242,6 +240,8 @@ public class PtmLayout extends ViewGroup {
             case MotionEvent.ACTION_DOWN:
                 mStartX = x;
                 mStartY = y;
+                mMoveX = 0;
+                mMoveY = 0;
                 reset();
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -250,15 +250,15 @@ public class PtmLayout extends ViewGroup {
                 if (deltaX >= mScaledTouchSlop && deltaY >= mScaledTouchSlop) {
                     if (deltaX > deltaY) {//左右滑动  不拦截
                         return false;
-                    } else {//上下滑动  拦截
-                        if (mListener != null)
+                    } else {//上下滑动 并且是下拉操作
+                        if (mListener != null && mTouchY > mStartY)
                             mListener.onPtmStart();
                         return true;
                     }
                 } else if (deltaX >= mScaledTouchSlop && deltaY < mScaledTouchSlop) {
                     return false;//左右滑动  不拦截
                 } else if (deltaX < mScaledTouchSlop && deltaY >= mScaledTouchSlop) {
-                    if (mListener != null)
+                    if (mListener != null && mTouchY > mStartY)
                         mListener.onPtmStart();
                     return true;//上下滑动  拦截
                 }
@@ -270,7 +270,7 @@ public class PtmLayout extends ViewGroup {
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        PtmLogger.e(TAG, "onTouchEvent");
+        PtmLogger.i(TAG, "onTouchEvent");
         if (mListener != null && !mListener.canTouch()) {
             PtmLogger.e(TAG, "canTouch is false");
             return true;
@@ -294,7 +294,7 @@ public class PtmLayout extends ViewGroup {
                 PtmLogger.e(TAG, "onTouchEvent: ACTION_MOVE");
                 if (mTouchY <= mStartY) {
                     reset();
-                    return true;
+                    return false;
                 }
                 mMoveX = x;
                 mMoveY = y;
@@ -355,7 +355,7 @@ public class PtmLayout extends ViewGroup {
     @Override
     public void computeScroll() {
         boolean isNotFinish = mScroller.computeScrollOffset();
-        PtmLogger.e(TAG, "isNotFinish=" + isNotFinish);
+        PtmLogger.i(TAG, "isNotFinish=" + isNotFinish);
         if (isNotFinish) {
             int currY = mScroller.getCurrY();
             mDistanceY = mDistanceTemp - Math.abs(currY);

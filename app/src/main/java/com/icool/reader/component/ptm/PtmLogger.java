@@ -9,7 +9,7 @@ import android.util.Log;
 
 public class PtmLogger {
 
-    private static boolean debug = false;
+    private static boolean debug = true;
 
     public static void e(String TAG, String messae) {
         if (debug)

@@ -94,8 +94,10 @@ public abstract class PageAnimController {
         mIReaderTouchListener = listener;
     }
 
+    protected void drawStatic(Canvas canvas) {
+        canvas.drawBitmap(mCurrentBitmap, 0, 0, null);
+    }
 
-    abstract void drawStatic(Canvas canvas);
 
     abstract void drawMove(Canvas canvas);
 
@@ -340,7 +342,7 @@ public abstract class PageAnimController {
      * {@link #startScroll} 方法来控制动画
      */
     public boolean directNextPage() {
-        if (isScroll)abortAnim();
+        if (isScroll) abortAnim();
         mTouchX = mTouchY = 0;
         mStartX = mStartY = 0;
         boolean hasNext = hasNext();
@@ -356,7 +358,7 @@ public abstract class PageAnimController {
      * {@link #startScroll} 方法来控制动画
      */
     public boolean directPrePage() {
-        if (isScroll)abortAnim();
+        if (isScroll) abortAnim();
         mTouchX = mTouchY = 0;
         mStartX = mStartY = 0;
         boolean hasPre = hasPre();
