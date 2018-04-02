@@ -1456,7 +1456,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (!readerView.isSpeaking()) {
+        if (!readerView.isSpeaking() && !isShow) {
             switch (keyCode) {
                 case KeyEvent.KEYCODE_VOLUME_DOWN:
                     readerView.directNextPage();

@@ -19,6 +19,7 @@ import com.icool.reader.R;
 import com.icool.reader.component.reader.anim.CoverAnimController;
 import com.icool.reader.component.reader.anim.NoneAnimController;
 import com.icool.reader.component.reader.anim.PageAnimController;
+import com.icool.reader.component.reader.anim.SimulateAnimController;
 import com.icool.reader.component.reader.anim.SlideAnimController;
 import com.icool.reader.component.reader.bean.ChapterBean;
 import com.icool.reader.component.reader.config.IReaderConfig;
@@ -52,7 +53,7 @@ import io.reactivex.schedulers.Schedulers;
  * Created by ZhaoZongyao on 2018/1/11.
  */
 public class ReaderView extends View {
-    private static final String TAG = "MReaderView";
+    private static final String TAG = "ReaderView";
     //语音合成播放
     private boolean isSpeaking = false;
     //加载中
@@ -172,6 +173,10 @@ public class ReaderView extends View {
             case IReaderConfig.PageMode.SLIDE:
                 mAnimController = new SlideAnimController(this, mWidth, mHeight, mPageElement, mPageChangeListener);
                 mPageMode = IReaderConfig.PageMode.SLIDE;
+                break;
+            case IReaderConfig.PageMode.SIMULATION:
+                mAnimController = new SimulateAnimController(this, mWidth, mHeight, mPageElement, mPageChangeListener);
+                mPageMode = IReaderConfig.PageMode.SIMULATION;
                 break;
             case IReaderConfig.PageMode.NONE:
             default:

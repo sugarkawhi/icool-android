@@ -39,7 +39,7 @@ public abstract class PageAnimController {
     //左侧区域
     private Rect mLeftRect;
     //是否处于滑动状态
-    private boolean isMoveState;
+    protected boolean isMoveState;
     //翻下页 判断是否有下页、翻上页 判断是否有上页
     private boolean hasNextOrPre = true;
     //是否处于滚动状态
@@ -65,7 +65,7 @@ public abstract class PageAnimController {
     //按下开始坐标
     protected int mStartX, mStartY;
     //滑动当前坐标
-    protected int mTouchX, mTouchY;
+    protected float mTouchX, mTouchY;
     //判断当前是否取消坐标 - 类似于mTouchX,mTouchY。
     protected int mMoveX, mMoveY;
 
@@ -81,9 +81,9 @@ public abstract class PageAnimController {
         this.mReaderHeight = readerHeight;
         mPageChangeListener = pageChangeListener;
 
-        mLeftRect = new Rect(0, 0, readerWidth / 4, readerHeight);
-        mRightRect = new Rect(readerWidth / 4 * 3, 0, readerWidth, readerHeight);
-        mCenterRect = new Rect(readerWidth / 4, 0, readerWidth / 4 * 3, readerHeight);
+        mLeftRect = new Rect(0, 0, readerWidth / 4, readerHeight + 10);//+10处理边缘情况
+        mRightRect = new Rect(readerWidth / 4 * 3, 0, readerWidth + 10, readerHeight + 10);//同上
+        mCenterRect = new Rect(readerWidth / 4, 0, readerWidth / 4 * 3, readerHeight + 10);//同上
         mCurrentBitmap = Bitmap.createBitmap(readerWidth, readerHeight, Bitmap.Config.RGB_565);
         mNextBitmap = Bitmap.createBitmap(readerWidth, readerHeight, Bitmap.Config.RGB_565);
         mScroller = new Scroller(mReaderView.getContext(), new LinearInterpolator());
@@ -101,9 +101,9 @@ public abstract class PageAnimController {
 
     abstract void drawMove(Canvas canvas);
 
-    private void startScroll() {
+    protected void startScroll() {
         isScroll = true;
-        int dx = 0;
+        float dx = 0;
         switch (mDirection) {
             case IReaderDirection.NEXT:
                 if (isCancel) {
@@ -126,8 +126,8 @@ public abstract class PageAnimController {
         if (mReaderView.getPageMode() != IReaderConfig.PageMode.NONE) {
             duration = DURATION_PAGE_SWITCH;
         }
-        duration = duration * Math.abs(dx) / mReaderWidth;
-        mScroller.startScroll(mTouchX, 0, dx, 0, duration);
+        duration = (int) (duration * Math.abs(dx) / mReaderWidth);
+        mScroller.startScroll((int) mTouchX, 0, (int) dx, 0, duration);
         mReaderView.invalidate();
     }
 
@@ -157,15 +157,14 @@ public abstract class PageAnimController {
         }
         int x = (int) event.getX();
         int y = (int) event.getY();
-        mTouchX = x;
-        mTouchY = y;
+
+        setTouchPoint(x, y);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 ReaderLogger.e(TAG, "dispatchTouchEvent ACTION_DOWN");
                 //NOTICE:务必在最前面调用
                 abortAnim();
-                mStartX = x;
-                mStartY = y;
+                setStartPoint(x, y);
                 mMoveX = 0;
                 mMoveY = 0;
                 //判断是否有上下页  默认有上/下页
@@ -176,8 +175,6 @@ public abstract class PageAnimController {
                 isCancel = false;
                 //是否是滑动状态
                 isMoveState = false;
-                //停止动画
-
                 return true;
             case MotionEvent.ACTION_MOVE:
                 ReaderLogger.e(TAG, "dispatchTouchEvent ACTION_MOVE");
@@ -195,7 +192,7 @@ public abstract class PageAnimController {
                     if (x - mStartX > 0) {
                         ReaderLogger.e(TAG, "MotionEvent2.方向为上一页");
                         //处理事件1 判断方向
-                        mDirection = IReaderDirection.PRE;
+                        setDirection(IReaderDirection.PRE);
                         //处理事件2 判断存在上页
                         boolean hasPre = hasPre();
                         if (!hasPre) {//不存在上一页
@@ -206,7 +203,7 @@ public abstract class PageAnimController {
                     } else {
                         ReaderLogger.e(TAG, "MotionEvent2.方向为下一页");
                         //处理事件1 判断方向
-                        mDirection = IReaderDirection.NEXT;
+                        setDirection(IReaderDirection.NEXT);
                         //处理事件2 判断存在下页
                         boolean hasPre = hasNext();
                         if (!hasPre) {//不存在下一页
@@ -222,12 +219,13 @@ public abstract class PageAnimController {
                     ReaderLogger.e(TAG, "MotionEvent3.开始滑动");
                     switch (mDirection) {
                         case IReaderDirection.NEXT:
-                            isCancel = (x - mMoveX >= 0);
+                            isCancel = x > mMoveX;
                             ReaderLogger.e(TAG, "下一页：isCancel=" + isCancel);
                             break;
                         case IReaderDirection.PRE:
                             ReaderLogger.e(TAG, "上一页：isCancel=" + isCancel);
-                            isCancel = (x - mMoveX <= 0);
+                            isCancel = x < mMoveX;
+                            break;
                     }
                 }
                 mMoveX = x;
@@ -239,20 +237,20 @@ public abstract class PageAnimController {
                 ReaderLogger.e(TAG, "dispatchTouchEvent ACTION_UP");
                 //i:非滑动状态 点击屏幕 1.中间2.左侧3.右侧
                 if (!isMoveState) {
-                    if (mCenterRect.contains(mTouchX, mTouchY)) {
+                    if (mCenterRect.contains((int) mTouchX, (int) mTouchY)) {
                         //点击中间区域
                         if (mIReaderTouchListener != null) mIReaderTouchListener.onTouchCenter();
                         return true;
-                    } else if (mLeftRect.contains(mTouchX, mTouchY)) {
+                    } else if (mLeftRect.contains((int) mTouchX, (int) mTouchY)) {
                         //上一页
-                        mDirection = IReaderDirection.PRE;
+                        setDirection(IReaderDirection.PRE);
                         boolean hasPre = hasPre();
                         if (!hasPre) {
                             return true;
                         }
-                    } else if (mRightRect.contains(mTouchX, mTouchY)) {
+                    } else if (mRightRect.contains((int) mTouchX, (int) mTouchY)) {
                         //下一页
-                        mDirection = IReaderDirection.NEXT;
+                        setDirection(IReaderDirection.NEXT);
                         boolean hasNext = hasNext();
                         if (!hasNext) {//不存在下一页
                             return true;
@@ -283,9 +281,10 @@ public abstract class PageAnimController {
         boolean notFinished = mScroller.computeScrollOffset();
         //ReaderLogger.e(TAG, "computeScroll  computeScrollOffset -> " + notFinished);
         if (notFinished) {
-            mTouchX = mScroller.getCurrX();
-            mTouchY = mScroller.getCurrY();
-            if (mScroller.getFinalX() == mTouchX && mScroller.getFinalY() == mTouchY) {
+            int x = mScroller.getCurrX();
+            int y = mScroller.getCurrY();
+            setTouchPoint(x, y);
+            if (isScroll && mScroller.getFinalX() == x && mScroller.getFinalY() == y) {
                 isScroll = false;
                 mPageChangeListener.onSelectPage(mDirection, isCancel);
             }
@@ -315,10 +314,12 @@ public abstract class PageAnimController {
         if (!mScroller.isFinished()) {
             mScroller.abortAnimation();
             isScroll = false;
-            mTouchX = mScroller.getFinalX();
-            mTouchY = mScroller.getFinalY();
+            int x = mScroller.getFinalX();
+            int y = mScroller.getFinalY();
+            setTouchPoint(x, y);
             mPageChangeListener.onSelectPage(mDirection, isCancel);
-            ReaderLogger.e(TAG, "abortAnim");
+            mReaderView.invalidate();
+            ReaderLogger.i(TAG, "abortAnim");
         }
     }
 
@@ -343,11 +344,24 @@ public abstract class PageAnimController {
      */
     public boolean directNextPage() {
         if (isScroll) abortAnim();
-        mTouchX = mTouchY = 0;
-        mStartX = mStartY = 0;
+        int startX, startY;
+        float touchX, touchY;
+        if (mReaderView.getPageMode() == IReaderConfig.PageMode.SIMULATION) {
+            startX = mReaderWidth - 10;//设置在右边的一个范围即可
+            startY = mReaderHeight;
+            touchX = mReaderWidth - 10;
+            touchY = mReaderHeight;
+        } else {
+            startX = 0;
+            startY = 0;
+            touchX = 0;
+            touchY = 0;
+        }
+        setStartPoint(startX, startY);
+        setTouchPoint(touchX, touchY);
         boolean hasNext = hasNext();
         if (hasNext) {
-            mDirection = IReaderDirection.NEXT;
+            setDirection(IReaderDirection.NEXT);
             startScroll();
         }
         return hasNext;
@@ -359,16 +373,41 @@ public abstract class PageAnimController {
      */
     public boolean directPrePage() {
         if (isScroll) abortAnim();
-        mTouchX = mTouchY = 0;
-        mStartX = mStartY = 0;
+        setStartPoint(0, 0);
+        setTouchPoint(0, 0);
         boolean hasPre = hasPre();
         if (hasPre) {
-            mDirection = IReaderDirection.PRE;
+            setDirection(IReaderDirection.PRE);
             startScroll();
         }
         return hasPre;
     }
 
+    /**
+     * 设置方向
+     *
+     * @param direction 方向
+     */
+    protected void setDirection(int direction) {
+        mDirection = direction;
+    }
+
+
+    /**
+     * 设置起始点
+     *
+     * @param x
+     * @param y
+     */
+    public void setStartPoint(int x, int y) {
+        mStartX = x;
+        mStartY = y;
+    }
+
+    public void setTouchPoint(float x, float y) {
+        mTouchX = x;
+        mTouchY = y;
+    }
 
     public interface IPageChangeListener {
 

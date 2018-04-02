@@ -251,16 +251,18 @@ public class PtmLayout extends ViewGroup {
                     if (deltaX > deltaY) {//左右滑动  不拦截
                         return false;
                     } else {//上下滑动 并且是下拉操作
-                        if (mListener != null && mTouchY > mStartY)
+                        if (mListener != null && mTouchY > mStartY) {
                             mListener.onPtmStart();
-                        return true;
+                            return true;
+                        }
                     }
                 } else if (deltaX >= mScaledTouchSlop && deltaY < mScaledTouchSlop) {
                     return false;//左右滑动  不拦截
                 } else if (deltaX < mScaledTouchSlop && deltaY >= mScaledTouchSlop) {
-                    if (mListener != null && mTouchY > mStartY)
+                    if (mListener != null && mTouchY > mStartY) {
                         mListener.onPtmStart();
-                    return true;//上下滑动  拦截
+                        return true;//上下滑动  拦截
+                    }
                 }
 
         }

@@ -35,7 +35,7 @@ public class SlideAnimController extends PageAnimController {
 
     @Override
     void drawMove(Canvas canvas) {
-        int xOffset = Math.abs(mStartX - mTouchX);
+        int xOffset = (int) Math.abs(mStartX - mTouchX);
         switch (mDirection) {
             case IReaderDirection.NEXT:
                 // 取消状态下，并且发生越界了

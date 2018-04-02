@@ -10,7 +10,7 @@ import android.util.Log;
 
 public class ReaderLogger {
 
-    private static final boolean READER_DEBUG = false;
+    private static final boolean READER_DEBUG = true;
 
     public static void i(String TAG, String log) {
         if (!READER_DEBUG) return;
