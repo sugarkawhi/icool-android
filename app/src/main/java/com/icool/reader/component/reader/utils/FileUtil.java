@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Environment;
 
+import com.icool.reader.base.IcoolApplication;
+import com.icool.reader.http.api.IcoolApi;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,9 +21,11 @@ public class FileUtil {
     // 创建一个临时目录，用于复制临时文件，如assets目录下的离线资源文件
     public static String createTmpDir(Context context) {
         String sampleDir = "baiduTTS";
-        String tmpDir = Environment.getExternalStorageDirectory().toString() + "/" + sampleDir;
+        //String tmpDir = Environment.getExternalStorageDirectory().toString() + "/" + sampleDir;
+        String tmpDir = IcoolApplication.getInstance().getExternalCacheDir()
+                + File.separator + sampleDir;
         if (!FileUtil.makeDir(tmpDir)) {
-            tmpDir = context.getExternalFilesDir(sampleDir).getAbsolutePath();
+            tmpDir = IcoolApplication.getInstance().getExternalCacheDir().getAbsolutePath();
             if (!FileUtil.makeDir(sampleDir)) {
                 throw new RuntimeException("create model resources dir failed :" + tmpDir);
             }
@@ -28,10 +33,6 @@ public class FileUtil {
         return tmpDir;
     }
 
-    public static boolean fileCanRead(String filename) {
-        File f = new File(filename);
-        return f.canRead();
-    }
 
     public static boolean makeDir(String dirPath) {
         File file = new File(dirPath);

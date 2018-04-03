@@ -20,9 +20,6 @@ import static android.content.ContentValues.TAG;
 
 public class OfflineResource {
 
-
-    private static final String SAMPLE_DIR = "baiduTTS";
-
     private AssetManager assets;
     private String destPath;
 
@@ -30,7 +27,6 @@ public class OfflineResource {
     private String modelFilename;
 
     public OfflineResource(Context context, int speaker) throws IOException {
-        context = context.getApplicationContext();
         this.assets = context.getApplicationContext().getAssets();
         this.destPath = FileUtil.createTmpDir(context);
         setOfflineVoiceType(speaker);

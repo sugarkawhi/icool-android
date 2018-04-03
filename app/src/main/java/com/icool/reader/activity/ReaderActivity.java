@@ -50,6 +50,7 @@ import com.icool.reader.component.reader.dao.BookMarkBean;
 import com.icool.reader.component.reader.dao.BookRecordBean;
 import com.icool.reader.component.reader.data.LetterData;
 import com.icool.reader.component.reader.data.PageData;
+import com.icool.reader.component.reader.dialog.ReaderPayDialog;
 import com.icool.reader.component.reader.dialog.ReaderSettingDialog;
 import com.icool.reader.component.reader.dialog.ReaderSpacingDialog;
 import com.icool.reader.component.reader.dialog.ReaderTtsDialog;
@@ -66,6 +67,7 @@ import com.icool.reader.fragment.CatalogueFragment;
 import com.icool.reader.http.BaseHttpResult;
 import com.icool.reader.http.HttpUtils;
 import com.icool.reader.http.RxUtils;
+import com.icool.reader.http.api.ApiConfig;
 import com.icool.reader.http.api.IcoolApi;
 import com.icool.reader.http.observer.DefaultObserver;
 import com.icool.reader.utils.Logger;
@@ -136,6 +138,10 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     private int mAppBarHeight;
     private int readerBottomHeight;
     private boolean isShow;
+    //正在获取下一章节内容
+    private boolean isGettingNext;
+    //正在获取上一章节内容
+    private boolean isGettingPre;
     //书籍详细信息
     private BookBean mBook;
     private BookMarkFragment mBookMarkFragment;
@@ -295,7 +301,14 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         readerView.setReaderChapterChangeListener(new IReaderChapterChangeListener() {
             @Override
             public void onChapterChange(ChapterBean curChapter, int direction) {
-                if (curChapter == null) return;
+                if (curChapter == null) {
+                    stopTts();
+                    return;
+                }
+                //todo 处理章节收费情况
+                if (curChapter.getIsfree() == ApiConfig.YES_NO.N) {
+                    showPayDialog(curChapter);
+                }
                 switch (direction) {
                     case IReaderDirection.NEXT:
                         getNextChapter(curChapter.getChapterid());
@@ -308,12 +321,19 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
 
             @Override
             public void onNoPrePage(ChapterBean curChapter) {
-                showToast("WAIT : pre");
+                //TODO 获取前一章
+                showToast("暂无上一章节内容，稍后重试");
+                if (readerView.getCurrentChapter() != null) {
+                    getPreChapter(readerView.getCurrentChapter().getChapterid());
+                }
             }
 
             @Override
             public void onNoNextPage(ChapterBean curChapter) {
-                showToast("WAIT : next");
+                showToast("暂无下一章节内容，稍后重试");
+                if (readerView.getCurrentChapter() != null) {
+                    getNextChapter(readerView.getCurrentChapter().getChapterid());
+                }
             }
 
             @Override
@@ -511,7 +531,11 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
 
                     @Override
                     public void onNext(ZipChapter zipChapter) {
-                        readerView.setCurrentChapter(zipChapter.cur, progress);
+                        ChapterBean curChapter = zipChapter.cur;
+                        readerView.setCurrentChapter(curChapter, progress);
+                        if (curChapter != null && curChapter.getIsfree() == ApiConfig.YES_NO.N) {
+                            showPayDialog(curChapter);
+                        }
                         boolean next = readerView.setNextChapter(zipChapter.next);
                         boolean pre = readerView.setPreChapter(zipChapter.pre);
                     }
@@ -537,6 +561,8 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * @param chapterId 当前章节id
      */
     private void getPreChapter(String chapterId) {
+        if (isGettingPre) return;
+        isGettingPre = true;
         HttpUtils.getApiInstance()
                 .getPreChapterReadByIdV2(chapterId)
                 .compose(RxUtils.<BaseHttpResult<ChapterBean>>defaultSchedulers())
@@ -545,6 +571,19 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                     @Override
                     protected void onSuccess(ChapterBean chapterBean) {
                         readerView.setPreChapter(chapterBean);
+                        isGettingPre = false;
+                    }
+
+                    @Override
+                    protected void onFail(BaseHttpResult<ChapterBean> result) {
+                        super.onFail(result);
+                        isGettingPre = false;
+                    }
+
+                    @Override
+                    protected void onException(ExceptionReason reason) {
+                        super.onException(reason);
+                        isGettingPre = false;
                     }
                 });
     }
@@ -555,6 +594,8 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * @param chapterId 章节id
      */
     private void getNextChapter(String chapterId) {
+        if (isGettingNext) return;
+        isGettingNext = true;
         HttpUtils.getApiInstance()
                 .getNextChapterReadByIdV2(chapterId)
                 .compose(RxUtils.<BaseHttpResult<ChapterBean>>defaultSchedulers())
@@ -562,6 +603,19 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                     @Override
                     protected void onSuccess(ChapterBean chapterBean) {
                         readerView.setNextChapter(chapterBean);
+                        isGettingNext = false;
+                    }
+
+                    @Override
+                    protected void onFail(BaseHttpResult<ChapterBean> result) {
+                        super.onFail(result);
+                        isGettingNext = false;
+                    }
+
+                    @Override
+                    protected void onException(ExceptionReason reason) {
+                        super.onException(reason);
+                        isGettingNext = false;
                     }
                 });
     }
@@ -570,6 +624,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * 显示 APP_BAR 和 Bottom_Bar 和状态栏
      */
     private void showReaderBar() {
+        if (isShow) return;
         isShow = true;
         mAppBarLayout.animate()
                 .translationY(0)
@@ -586,6 +641,7 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
      * 隐藏 APP_BAR 和 Bottom_Bar 和 状态栏
      */
     private void hideReaderBar() {
+        if (!isShow) return;
         isShow = false;
         mAppBarLayout.animate()
                 .translationY(-mAppBarHeight)
@@ -906,6 +962,12 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
     //开启语音合成
     @OnClick(R.id.iv_tts)
     public void tts() {
+        //TODO 付费章节不支持
+        if (readerView.getCurrentChapter() != null
+                && readerView.getCurrentChapter().getIsfree() == ApiConfig.YES_NO.N) {
+            showToast("付费章节不支持语音朗读");
+            return;
+        }
         if (isInitied) {
             startTts();
         } else {
@@ -1174,7 +1236,15 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
                         readerView.clearTtsLetters();
                         if (mTtsLetterOffset == 0) {
                             PageData pageData = readerView.ttsNextPage();
-                            speak(pageData);
+                            //判断是否切换章节了 并且是付费章节 就不要读了
+                            if (pageData != null
+                                    && pageData.getIndexOfChapter() == 0
+                                    && readerView.getCurrentChapter() != null
+                                    && readerView.getCurrentChapter().getIsfree() == ApiConfig.YES_NO.N) {
+                                stopTts();
+                            } else {
+                                speak(pageData);
+                            }
                         } else {
                             hasSwitchNextPage = false;//重置标志位
                             PageData pageData = readerView.getCurrentPage();
@@ -1214,8 +1284,6 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         // 声学模型文件路径 (离线引擎使用), 请确认下面两个文件存在
         mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_TTS_TEXT_MODEL_FILE, offlineResource.getTextFilename());
         mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_TTS_SPEECH_MODEL_FILE, offlineResource.getModelFilename());
-
-
     }
 
 
@@ -1346,7 +1414,8 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
         super.onDestroy();
         if (mSpeechSynthesizer != null) {
             int result = mSpeechSynthesizer.release();
-            Logger.d(TAG, "释放资源成功");
+            checkResult(result, "release");
+            mSpeechSynthesizer = null;
         }
         if (myReceiver != null) {
             unregisterReceiver(myReceiver);
@@ -1467,5 +1536,16 @@ public class ReaderActivity extends BaseActivity implements BookMarkAdapter.IBoo
             }
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    /**
+     * 提示购买章节
+     */
+    private void showPayDialog(ChapterBean chapter) {
+        new ReaderPayDialog(this)
+                .setChapterName(chapter.getName())
+                .setContent(chapter.getContent())
+                .show();
+        hideReaderBar();
     }
 }

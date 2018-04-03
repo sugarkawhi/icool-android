@@ -16,8 +16,8 @@ import retrofit2.http.Query;
  */
 public interface IcoolApi {
 
-//        String BASE_URL = "https://app.xhhread.com/";
-    String BASE_URL = "http://192.168.1.2/";
+        String BASE_URL = "https://app.xhhread.com/";
+//    String BASE_URL = "http://192.168.1.2/";
 
     /* 章节目录 */
     @GET("/chapter/searchChapterListVO.i?pageSize=10000")
